@@ -1,90 +1,108 @@
-// import httpStatus from 'http-status';
-// import catchAsync from '../../utils/catchAsync';
-// import { ProjectServices } from './service.projects';
-// import { response } from '../../utils/sendResponse';
-// import { RequestHandler } from 'express';
-// import { Projects } from './model.projects';
- 
+import httpStatus from 'http-status';
+import catchAsync from '../../utils/catchAsync';
+import { response } from '../../utils/sendResponse';
+import { productServices } from './service.product';
 
-// // create course
-// const createProject: RequestHandler = async (req, res) => {
-//   const result = await ProjectServices.createProject(req.body);
+// Create product
+const createProduct = catchAsync(async (req, res) => {
+    const result = await productServices.createProduct(req.body);
 
-//   response.createSendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Project created Successfully',
-//     data: result,
-//   });
-// };
+    response.createSendResponse(res, {
+        statusCode: httpStatus.CREATED,
+        success: true,
+        message: 'Product created successfully',
+        data: result,
+    });
+});
 
-// // get all course
-// const getAllProjects = catchAsync(async (req, res) => {
+// Get all products (with filters & pagination)
+const getAllProducts = catchAsync(async (req, res) => {
+    const result = await productServices.getAllProducts(req.query);
 
-//   const result = await ProjectServices.getAllProjects(req.query);
+    response.createSendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Products retrieved successfully',
+        data: result,
+    });
+});
 
+// Get single product by ObjectId or slug
+const getSingleProduct = catchAsync(async (req, res) => {
+    const { productId } = req.params;
+    const result = await productServices.getSingleProduct(productId);
 
-//   response.getSendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-    
-//     message: 'Projects retrieved successfully',
-//     data: result,
-//   });
-// });
+    response.createSendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Product retrieved successfully',
+        data: result,
+    });
+});
 
-// // delete project
-// const deleteProject = catchAsync(async (req, res) => {
-//   const { projectId } = req.params;
+// Update product
+const updateProduct = catchAsync(async (req, res) => {
+    const { productId } = req.params;
+    const result = await productServices.updateProduct(productId, req.body);
 
-//   const resp = await ProjectServices.deleteProjects(projectId);
+    response.createSendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Product updated successfully',
+        data: result,
+    });
+});
 
-//   response.createSendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Project deleted successfully',
-//     data: resp,
-//   });
-// });
+// Delete product
+const deleteProduct = catchAsync(async (req, res) => {
+    const { productId } = req.params;
+    const result = await productServices.deleteProduct(productId);
 
-// // Get singleShoe
-// const getSingleProject = catchAsync(async (req, res) => {
-//   const { projectId } = req.params;
+    response.createSendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Product deleted successfully',
+        data: result,
+    });
+});
 
-//   const result = await ProjectServices.getSingleProject(projectId);
+// Toggle isFeatured flag
+const toggleFeatured = catchAsync(async (req, res) => {
+    const { productId } = req.params;
+    const result = await productServices.toggleFeatured(productId);
 
-//   response.createSendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Project retrieved successfully',
-//     data: result,
-//   });
-// });
+    response.createSendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: `Product is now ${result.isFeatured ? 'featured' : 'unfeatured'}`,
+        data: result,
+    });
+});
 
-// // update
-// const updateProject = catchAsync(async (req, res) => {
-//   const { projectId } = req.params;
-//   const updatedData = req.body;
+// Update a specific variant
+const updateVariant = catchAsync(async (req, res) => {
+    const { productId, variantId } = req.params;
 
-//   // console.log('update',updatedData)
+    const result = await productServices.updateVariant(
+        productId,
+        variantId,
+        req.body,
+    );
 
-//   const result = await ProjectServices.updateProject(projectId, updatedData);
+    response.createSendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Variant updated successfully',
+        data: result,
+    });
+});
 
-//   response.createSendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: 'Project updated successfully',
-//     data: result,
-//   });
-// });
-
-
-
-// export const projectControllers = {
-//   createProject,
-//   getAllProjects,
-//   deleteProject,
-//   getSingleProject,
-//   updateProject,
-  
-// };
+export const productControllers = {
+    createProduct,
+    getAllProducts,
+    getSingleProduct,
+    updateProduct,
+    deleteProduct,
+    toggleFeatured,
+    updateVariant,
+};

@@ -1,124 +1,226 @@
+import httpStatus from 'http-status';
+import AppError from '../../errors/AppErrors';
+import { TProduct } from './interface.product';
+import { Product } from './model.product';
+import mongoose from 'mongoose';
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+const isObjectId = (val: string) => /^[a-f\d]{24}$/i.test(val);
 
-// /* eslint-disable @typescript-eslint/no-explicit-any */
-// import AppError from '../../errors/AppErrors'; 
-// import httpStatus from 'http-status';
-// import { TProject } from './interface.projects';
-// import { Projects } from './model.projects';
+// ── Create ───────────────────────────────────────────────────────────────────
+const createProduct = async (payload: TProduct) => {
+    // Duplicate name check (case-insensitive)
+    const existingName = await Product.findOne({
+        name: { $regex: `^${payload.name}$`, $options: 'i' },
+    });
+    if (existingName) {
+        throw new AppError(
+            httpStatus.CONFLICT,
+            `A product named '${existingName.name}' already exists.`,
+            'Duplicate name',
+        );
+    }
 
-// // 1. Create a new project
-// const createProject = async (projectData: TProject) => {
-//   const result = await Projects.create(projectData);
-//   return result;
-// };
+    // Duplicate slug check
+    const existingSlug = await Product.findOne({ slug: payload.slug });
+    if (existingSlug) {
+        throw new AppError(
+            httpStatus.CONFLICT,
+            `A product with slug '${payload.slug}' already exists.`,
+            'Duplicate slug',
+        );
+    }
 
-// // 2. Get all projects with filtering, sorting, and pagination
-// const getAllProjects = async (payload: Record<string, unknown>) => {
-//   try {
-   
-//     const {
-//       page = 1,
-//       limit = 10,
-//       sortBy = 'createdAt',  
-//       sortOrder = 'desc',  
-//       title,
-//       technology, 
-//       category,
-//       status,
-//       createdAfter,  
-//     } = payload;
+    const product = await Product.create(payload);
+    return product.populate('category', 'name slug');
+};
 
- 
-//     const filter: any = {};
+// ── Get All ──────────────────────────────────────────────────────────────────
+const getAllProducts = async (query: Record<string, unknown>) => {
+    const {
+        search,
+        category,
+        status,
+        isFeatured,
+        minPrice,
+        maxPrice,
+        sort = '-createdAt',
+        page = 1,
+        limit = 12,
+    } = query;
 
-//     if (title) {
-//       filter.title = { $regex: new RegExp(title as string, 'i') };
-//     }
-//     if (category) {
-//       filter.category = { $regex: new RegExp(category as string, 'i') };
-//     }
-//     if (status) {
-//       filter.status = { $regex: new RegExp(status as string, 'i') };
-//     }
-//     if (technology) {
-//       filter.technologies = { $regex: new RegExp(technology as string, 'i') };
-//     }
-//     if (createdAfter) {
-//       const releaseDate = new Date(createdAfter as string);
-//       if (!isNaN(releaseDate.getTime())) {
-//         filter.createdAt = { $gte: releaseDate };
-//       }
-//     }
-    
-//     const sort: Record<string, any> = {};
-//     sort[sortBy as string] = sortOrder === 'asc' ? 1 : -1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const filter: Record<string, any> = {};
 
-//     const skip = (Number(page) - 1) * Number(limit);
+    // Full-text search
+    if (search) {
+        filter.$text = { $search: search as string };
+    }
 
-//     const result = await Projects.find(filter)
-//       .sort(sort)
-//       .skip(skip)
-//       .limit(Number(limit));
+    if (category) filter.category = category;
+    if (status) filter.status = status;
+    if (isFeatured !== undefined)
+        filter.isFeatured = isFeatured === 'true' || isFeatured === true;
 
-//     const total = await Projects.countDocuments(filter);
+    // Price filter — applied to variants.price range
+    if (minPrice || maxPrice) {
+        filter['variants.price'] = {};
+        if (minPrice) filter['variants.price'].$gte = Number(minPrice);
+        if (maxPrice) filter['variants.price'].$lte = Number(maxPrice);
+    }
 
-//     return {
-//       meta: {
-//         page: Number(page),
-//         limit: Number(limit),
-//         total,
-//       },
-//       data: result,
-//     };
-//   } catch (err: any) {
-//     throw new Error(err.message);
-//   }
-// };
+    const pageNum = Number(page);
+    const limitNum = Number(limit);
+    const skip = (pageNum - 1) * limitNum;
 
-// // 3. Get a single project by ID
-// const getSingleProject = async (id: string) => {
-//   const result = await Projects.findById(id);
+    const [products, total] = await Promise.all([
+        Product.find(filter)
+            .populate('category', 'name slug')
+            .sort(sort as string)
+            .skip(skip)
+            .limit(limitNum),
+        Product.countDocuments(filter),
+    ]);
 
-//   if (!result) {
-//     throw new AppError(httpStatus.NOT_FOUND, 'Project not found with this ID');
-//   }
-  
-//   return result;
-// };
+    return {
+        data: products,
+        meta: {
+            total,
+            page: pageNum,
+            limit: limitNum,
+            totalPages: Math.ceil(total / limitNum),
+        },
+    };
+};
 
-// // 4. Delete one or more projects by ID(s)
-// const deleteProjects = async (id: string) => {
-//   const result = await Projects.deleteOne({ _id: id });
+// ── Get Single ───────────────────────────────────────────────────────────────
+const getSingleProduct = async (idOrSlug: string) => {
+    const product = isObjectId(idOrSlug)
+        ? await Product.findById(idOrSlug).populate('category', 'name slug')
+        : await Product.findOne({ slug: idOrSlug }).populate('category', 'name slug');
 
-//   if (result.deletedCount === 0) {
-//      throw new AppError(httpStatus.NOT_FOUND, 'No projects found to delete');
-//   }
+    if (!product) {
+        throw new AppError(
+            httpStatus.NOT_FOUND,
+            'Product not found',
+            'No product found with the given id or slug',
+        );
+    }
+    return product;
+};
 
-//   return result;
-// };
+// ── Update ───────────────────────────────────────────────────────────────────
+const updateProduct = async (id: string, payload: Partial<TProduct>) => {
+    // Duplicate name check (case-insensitive, exclude self)
+    if (payload.name) {
+        const existingName = await Product.findOne({
+            name: { $regex: `^${payload.name}$`, $options: 'i' },
+            _id: { $ne: id },
+        });
+        if (existingName) {
+            throw new AppError(
+                httpStatus.CONFLICT,
+                `A product named '${existingName.name}' already exists.`,
+                'Duplicate name',
+            );
+        }
+    }
 
-// // 5. Update a project
-// const updateProject = async (id: string, updatedData: Partial<TProject>) => {
-//   const result = await Projects.findByIdAndUpdate(
-//     id,
-//     { $set: updatedData },
-//     { new: true, runValidators: true } 
-//   );
+    // Duplicate slug check (exclude self)
+    if (payload.slug) {
+        const existingSlug = await Product.findOne({
+            slug: payload.slug,
+            _id: { $ne: id },
+        });
+        if (existingSlug) {
+            throw new AppError(
+                httpStatus.CONFLICT,
+                `A product with slug '${payload.slug}' already exists.`,
+                'Duplicate slug',
+            );
+        }
+    }
 
-//   if (!result) {
-//     throw new AppError(
-//       httpStatus.NOT_FOUND,
-//       'Failed to update project. Project not found.',
-//     );
-//   }
+    const updated = await Product.findByIdAndUpdate(id, payload, {
+        new: true,
+        runValidators: true,
+    }).populate('category', 'name slug');
 
-//   return result;
-// };
+    if (!updated) {
+        throw new AppError(
+            httpStatus.NOT_FOUND,
+            'Product not found',
+            'No product found with the given id',
+        );
+    }
+    return updated;
+};
 
-// export const ProjectServices = {
-//   createProject,
-//   getAllProjects,
-//   getSingleProject,
-//   updateProject,
-//   deleteProjects,
-// };
+// ── Delete ───────────────────────────────────────────────────────────────────
+const deleteProduct = async (id: string) => {
+    const deleted = await Product.findByIdAndDelete(id);
+    if (!deleted) {
+        throw new AppError(
+            httpStatus.NOT_FOUND,
+            'Product not found',
+            'No product found with the given id',
+        );
+    }
+    return deleted;
+};
+
+// ── Toggle Featured ──────────────────────────────────────────────────────────
+const toggleFeatured = async (id: string) => {
+    const product = await Product.findById(id);
+    if (!product) {
+        throw new AppError(
+            httpStatus.NOT_FOUND,
+            'Product not found',
+            'No product found with the given id',
+        );
+    }
+    product.isFeatured = !product.isFeatured;
+    await product.save();
+    return product;
+};
+
+// ── Update a Variant ─────────────────────────────────────────────────────────
+const updateVariant = async (
+    productId: string,
+    variantId: string,
+    payload: Record<string, unknown>,
+) => {
+    // Build a $set map that targets only the variant fields supplied
+    const setFields: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(payload)) {
+        setFields[`variants.$.${key}`] = value;
+    }
+
+    const product = await Product.findOneAndUpdate(
+        {
+            _id: productId,
+            'variants._id': new mongoose.Types.ObjectId(variantId),
+        },
+        { $set: setFields },
+        { new: true, runValidators: true },
+    );
+
+    if (!product) {
+        throw new AppError(
+            httpStatus.NOT_FOUND,
+            'Product or variant not found',
+            '',
+        );
+    }
+    return product;
+};
+
+export const productServices = {
+    createProduct,
+    getAllProducts,
+    getSingleProduct,
+    updateProduct,
+    deleteProduct,
+    toggleFeatured,
+    updateVariant,
+};

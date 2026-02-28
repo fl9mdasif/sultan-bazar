@@ -25,7 +25,7 @@ const auth = (...requiredRoles: TUserRole[]) => {
       token,
       config.jwt_access_secret as string,
     ) as JwtPayload;
-    console.log('auth middleware', decoded);
+    // console.log('auth middleware', decoded);
     const { role, username, email, iat } = decoded;
 
     // checking if the user is exist
