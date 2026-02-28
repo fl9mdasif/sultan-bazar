@@ -25,8 +25,8 @@ const auth = (...requiredRoles: TUserRole[]) => {
       token,
       config.jwt_access_secret as string,
     ) as JwtPayload;
-    // console.log('d', decoded);
-    const { role, username,email, iat } = decoded;
+    console.log('auth middleware', decoded);
+    const { role, username, email, iat } = decoded;
 
     // checking if the user is exist
     const user = await User.isUserExists(email);
@@ -34,7 +34,7 @@ const auth = (...requiredRoles: TUserRole[]) => {
     if (!user) {
       throw new AppError(
         httpStatus.NOT_FOUND,
-        'This user is not found !',
+        'This User is not found -auth middleware !',
         'No user found with the id',
       );
     }

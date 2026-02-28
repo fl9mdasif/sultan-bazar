@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose'; 
+import { Schema, model } from 'mongoose';
 import bcrypt from 'bcrypt';
 import config from '../../config';
 import { TUser, UserModel } from './interface.auth';
@@ -25,7 +25,7 @@ const userSchema = new Schema<TUser, UserModel>(
     },
     role: {
       type: String,
-      enum: ['user', 'superAdmin'],
+      enum: ['user', 'admin', 'superAdmin'],
       required: true,
     },
 
@@ -34,7 +34,7 @@ const userSchema = new Schema<TUser, UserModel>(
   { timestamps: true },
 );
 
- 
+
 // hash the password
 userSchema.pre('save', async function (next) {
   // eslint-disable-next-line @typescript-eslint/no-this-alias

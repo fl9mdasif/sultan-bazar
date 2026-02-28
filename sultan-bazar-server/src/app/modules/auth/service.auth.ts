@@ -8,12 +8,14 @@ import bcrypt from 'bcrypt';
 import { createToken, verifyToken } from './utils.auth';
 import { JwtPayload } from 'jsonwebtoken';
 
+// register
 const registerUser = async (payload: TUser) => {
   // create
   const register = await User.create(payload);
   return register;
 };
 
+// login
 const loginUser = async (payload: TLoginUser) => {
   //
   // console.log(payload)
@@ -43,7 +45,7 @@ const loginUser = async (payload: TLoginUser) => {
 
   // create token
   const accessToken = createToken(
-    jwtPayload ,
+    jwtPayload,
     config.jwt_access_secret as string,
     config.jwt_access_expires_in as string,
   );
@@ -65,25 +67,24 @@ const loginUser = async (payload: TLoginUser) => {
 // change password
 const changePassword = async (
   userData: JwtPayload,
-  payload: { currentPassword: string; newPassword: string },
+  payload: { oldPassword: string; newPassword: string },
 ) => {
   // 01. checking if the user is exist
-  const user = await User.isUserExists(userData.username);
-  // console.log(user);
+  const user = await User.isUserExists(userData.email);
 
   if (!user) {
     throw new AppError(httpStatus.NOT_FOUND, 'This user is not found !', '');
   }
 
   // 02. checking if the password is correct
-  if (!(await User.isPasswordMatched(payload.currentPassword, user?.password)))
+  if (!(await User.isPasswordMatched(payload.oldPassword, user?.password)))
     throw new AppError(
       httpStatus.FORBIDDEN,
       `${user.role}'s Password do not matched`,
       '',
     );
   // 03 Check if the new password is different from the current password
-  if (payload.currentPassword === payload.newPassword) {
+  if (payload.oldPassword === payload.newPassword) {
     throw new AppError(
       httpStatus.BAD_REQUEST,
       'Password change failed. Ensure the new password is unique and not among the last 2 used',
@@ -101,7 +102,7 @@ const changePassword = async (
   // update password
   await User.findOneAndUpdate(
     {
-      username: userData.username,
+      email: userData.email,
       role: userData.role,
     },
     {

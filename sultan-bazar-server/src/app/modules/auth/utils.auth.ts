@@ -2,9 +2,13 @@ import jwt, { JwtPayload, SignOptions } from 'jsonwebtoken';
 
 // create token
 export const createToken = (
-  jwtPayload: { username: string; role: 'user' | 'admin'; email?: string },
+  jwtPayload: {
+    username: string;
+    role: 'user' | 'admin' | 'superAdmin';
+    email?: string
+  },
   secret: string,
-  expiresIn: string, 
+  expiresIn: string,
 ) => {
   return jwt.sign(jwtPayload, secret, {
     expiresIn,

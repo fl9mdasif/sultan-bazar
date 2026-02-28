@@ -4,7 +4,7 @@ import { response } from '../../utils/sendResponse';
 import { authServices } from './service.auth';
 
 const registerUser = catchAsync(async (req, res) => {
-    console.log(req.body);
+  console.log(req.body);
 
   const result = await authServices.registerUser(req.body);
 
@@ -36,7 +36,7 @@ const loginUser = catchAsync(async (req, res) => {
 // // change password
 const changePassword = catchAsync(async (req, res) => {
   const { ...passwordData } = req.body;
-  // console.log(req.user);
+  // console.log('controler', req.user, req.body);
   const result = await authServices.changePassword(req.user, passwordData);
 
   response.createSendResponse(res, {
