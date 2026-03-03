@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import httpStatus from 'http-status';
-import { User } from './mode.auth';
+import { User } from './model.auth';
 import { TLoginUser, TUser } from './interface.auth';
 import AppError from '../../errors/AppErrors';
 import config from '../../config';

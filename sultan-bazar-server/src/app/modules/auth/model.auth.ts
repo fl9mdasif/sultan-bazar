@@ -30,6 +30,20 @@ const userSchema = new Schema<TUser, UserModel>(
     },
 
     passwordChangedAt: { type: Date },
+
+    savedAddresses: [
+      {
+        label: { type: String },                          // "Home", "Office", etc.
+        fullName: { type: String, required: true },
+        phone: { type: String, required: true },
+        address: { type: String, required: true },
+        city: { type: String, required: true },
+        district: { type: String, required: true },
+        postalCode: { type: String },
+        country: { type: String, default: 'Bangladesh' },
+        isDefault: { type: Boolean, default: false },
+      },
+    ],
   },
   { timestamps: true },
 );

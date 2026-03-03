@@ -5,6 +5,7 @@ import { Order } from './model.order';
 import { generateOrderNumber } from './utils.order';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_CHARGE } from './const.order';
 import { TOrder, TOrderStatus, TPaymentStatus } from './interface.order';
+import { userServices } from '../user/service.user';
 
 // ── Place Order ────────────────────────────────────────────────────────────────
 const placeOrder = async (
@@ -94,6 +95,9 @@ const placeOrder = async (
             { $inc: { 'variants.$.stock': -item.quantity } },
         );
     }
+
+    // 5. Auto-save the shipping address to the user's profile (fire-and-forget)
+    userServices.autoSaveAddressFromOrder(userId, shippingAddress);
 
     return order;
 };

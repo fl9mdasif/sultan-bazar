@@ -1,4 +1,4 @@
-import { Model } from "mongoose";
+import { Model, Types } from "mongoose";
 import { USER_ROLE } from "./const.auth";
 
 export interface TLoginUser {
@@ -8,14 +8,28 @@ export interface TLoginUser {
 }
 
 
+export interface TSavedAddress {
+  _id?: Types.ObjectId;
+  label?: string;        // e.g. "Home", "Office"
+  fullName: string;
+  phone: string;
+  address: string;
+  city: string;
+  district: string;
+  postalCode?: string;
+  country?: string;
+  isDefault?: boolean;
+}
+
 export interface TUser {
   _id?: string;
   username: string;
   email: string;
   contactNumber: string;
   password: string;
-  role:  'user' | 'superAdmin';
+  role: 'user' | 'admin' | 'superAdmin';
   passwordChangedAt?: Date;
+  savedAddresses?: TSavedAddress[];
 }
 export type TUserRole = keyof typeof USER_ROLE;
 

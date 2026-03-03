@@ -4,7 +4,7 @@ import httpStatus from 'http-status';
 import config from '../config';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import AppError from '../errors/AppErrors';
-import { User } from '../modules/auth/mode.auth';
+import { User } from '../modules/auth/model.auth';
 import { TUserRole } from '../modules/auth/interface.auth';
 
 const auth = (...requiredRoles: TUserRole[]) => {
