@@ -40,6 +40,13 @@ router.patch(
 
 // ── Admin routes ───────────────────────────────────────────────────────────────
 
+// GET /api/orders/analytics/sales  — admin charting data
+router.get(
+    '/analytics/sales',
+    auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+    orderControllers.getSalesAnalytics,
+);
+
 // GET /api/orders  — all orders (paginated + filterable by status)
 router.get(
     '/',

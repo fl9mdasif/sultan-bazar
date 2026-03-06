@@ -7,6 +7,7 @@ import { getUserInfo } from "@/services/auth.services";
 import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { useGetAllOrdersQuery } from "@/redux/api/orderApi";
 import { useGetAllUsersQuery } from "@/redux/api/userApi";
+import SalesChart from "@/components/dashboard/SalesChart";
 import { Package, ShoppingCart, Users, TrendingUp, Star, Bell, ChevronRight, CloudCog } from "lucide-react";
 
 const quickLinks = [
@@ -78,6 +79,11 @@ export default function AdminDashboard() {
                         <p className="text-2xl font-bold text-gray-900">{s.value}</p>
                     </div>
                 ))}
+            </div>
+
+            {/* Sales Chart */}
+            <div className="mb-6 xl:w-2/3">
+                <SalesChart />
             </div>
 
             {/* Quick links */}

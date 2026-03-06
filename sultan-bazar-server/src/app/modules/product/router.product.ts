@@ -51,4 +51,11 @@ router.delete(
     productControllers.deleteProduct,
 );
 
+// POST /api/products/:productId/review — user
+router.post(
+    '/:productId/review',
+    auth(USER_ROLE.user),
+    productControllers.addReviewRating,
+);
+
 export const productRoutes = router;

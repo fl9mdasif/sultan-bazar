@@ -97,6 +97,21 @@ const updateVariant = catchAsync(async (req, res) => {
     });
 });
 
+// Add Review Rating
+const addReviewRating = catchAsync(async (req, res) => {
+    const { productId } = req.params;
+    const { rating } = req.body;
+
+    const result = await productServices.addReviewRating(productId, rating);
+
+    response.createSendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Review added successfully',
+        data: result,
+    });
+});
+
 export const productControllers = {
     createProduct,
     getAllProducts,
@@ -105,4 +120,5 @@ export const productControllers = {
     deleteProduct,
     toggleFeatured,
     updateVariant,
+    addReviewRating,
 };

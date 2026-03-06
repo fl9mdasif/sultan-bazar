@@ -32,7 +32,7 @@ const navByRole: Record<string, { label: string; href: string; icon: React.Eleme
         { label: "Dashboard", href: "/dashboard/user", icon: LayoutDashboard },
         { label: "My Orders", href: "/dashboard/user/orders", icon: ShoppingCart },
         { label: "Wishlist", href: "/wishlist", icon: Heart },
-        { label: "Addresses", href: "/dashboard/user/addresses", icon: MapPin },
+        // { label: "Addresses", href: "/dashboard/user/addresses", icon: MapPin },
         { label: "Settings", href: "/dashboard/user/settings", icon: Settings },
     ],
 };

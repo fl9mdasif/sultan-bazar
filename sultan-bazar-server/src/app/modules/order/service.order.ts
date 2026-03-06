@@ -251,6 +251,39 @@ const cancelOrder = async (orderId: string, userId: string, reason?: string) => 
     return order;
 };
 
+// ── Analytics ────────────────────────────────────────────────────────────────
+const getSalesAnalytics = async (period: 'daily' | 'monthly' | 'yearly') => {
+    let format = '%Y-%m-%d';
+    if (period === 'monthly') format = '%Y-%m';
+    if (period === 'yearly') format = '%Y';
+
+    const pipeline = [
+        {
+            $match: {
+                orderStatus: 'delivered',
+            },
+        },
+        {
+            $group: {
+                _id: { $dateToString: { format, date: '$createdAt' } },
+                revenue: { $sum: '$totalAmount' },
+                orders: { $sum: 1 },
+            },
+        },
+        {
+            $sort: { _id: 1 as const },
+        },
+    ];
+
+    const result = await Order.aggregate(pipeline);
+
+    return result.map((item) => ({
+        date: item._id,
+        revenue: item.revenue,
+        orders: item.orders,
+    }));
+};
+
 export const orderServices = {
     placeOrder,
     getMyOrders,
@@ -259,4 +292,5 @@ export const orderServices = {
     updateOrderStatus,
     updatePaymentStatus,
     cancelOrder,
+    getSalesAnalytics,
 };

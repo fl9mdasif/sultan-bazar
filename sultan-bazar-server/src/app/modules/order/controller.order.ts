@@ -103,6 +103,19 @@ const cancelOrder = catchAsync(async (req, res) => {
     });
 });
 
+// GET /api/orders/analytics/sales — admin gets sales chart data
+const getSalesAnalytics = catchAsync(async (req, res) => {
+    const period = (req.query.period as 'daily' | 'monthly' | 'yearly') || 'monthly';
+    const result = await orderServices.getSalesAnalytics(period);
+
+    response.createSendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Sales analytics retrieved successfully',
+        data: result,
+    });
+});
+
 export const orderControllers = {
     placeOrder,
     getMyOrders,
@@ -111,4 +124,5 @@ export const orderControllers = {
     updateOrderStatus,
     updatePaymentStatus,
     cancelOrder,
+    getSalesAnalytics,
 };

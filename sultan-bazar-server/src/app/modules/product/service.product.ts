@@ -215,6 +215,28 @@ const updateVariant = async (
     return product;
 };
 
+// ── Add Review Rating ────────────────────────────────────────────────────────
+const addReviewRating = async (productId: string, rating: number) => {
+    if (rating < 1 || rating > 5) {
+        throw new AppError(httpStatus.BAD_REQUEST, 'Rating must be between 1 and 5', 'Invalid rating');
+    }
+
+    const product = await Product.findById(productId);
+    if (!product) {
+        throw new AppError(httpStatus.NOT_FOUND, 'Product not found', 'No product found');
+    }
+
+    const currentTotalRating = product.rating * product.reviewCount;
+    const newReviewCount = product.reviewCount + 1;
+    const newAverageRating = (currentTotalRating + rating) / newReviewCount;
+
+    product.rating = Number(newAverageRating.toFixed(1));
+    product.reviewCount = newReviewCount;
+
+    await product.save();
+    return product;
+};
+
 export const productServices = {
     createProduct,
     getAllProducts,
@@ -223,4 +245,5 @@ export const productServices = {
     deleteProduct,
     toggleFeatured,
     updateVariant,
+    addReviewRating,
 };

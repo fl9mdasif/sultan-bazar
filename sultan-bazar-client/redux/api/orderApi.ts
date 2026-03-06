@@ -23,6 +23,15 @@ const orderApi = baseApi.injectEndpoints({
             providesTags: [tagTypes.orders],
         }),
 
+        // Get Sales Analytics (Admin)
+        getSalesAnalytics: build.query({
+            query: (period) => ({
+                url: `/orders/analytics/sales?period=${period || 'monthly'}`,
+                method: "GET",
+            }),
+            providesTags: [tagTypes.orders],
+        }),
+
         // Get My Orders (User)
         getMyOrders: build.query({
             query: () => ({
@@ -79,6 +88,7 @@ const orderApi = baseApi.injectEndpoints({
 export const {
     usePlaceOrderMutation,
     useGetAllOrdersQuery,
+    useGetSalesAnalyticsQuery,
     useGetMyOrdersQuery,
     useGetSingleOrderQuery,
     useUpdateOrderStatusMutation,
