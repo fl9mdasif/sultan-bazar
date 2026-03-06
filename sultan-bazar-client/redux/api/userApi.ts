@@ -3,13 +3,34 @@ import { baseApi } from "./baseApi";
 
 const userApi = baseApi.injectEndpoints({
     endpoints: (build) => ({
+        // ── Profile (all authenticated users) ─────────────────────────────────
+
+        // GET /users/me
+        getMyProfile: build.query({
+            query: () => ({ url: "/users/me", method: "GET" }),
+            providesTags: [tagTypes.users],
+        }),
+
+        // PATCH /users/me
+        updateProfile: build.mutation({
+            query: (data) => ({ url: "/users/me", method: "PATCH", data }),
+            invalidatesTags: [tagTypes.users],
+        }),
+
+        // POST /users/me/change-password
+        changePassword: build.mutation({
+            query: (data: { oldPassword: string; newPassword: string }) => ({
+                url: "/users/me/change-password",
+                method: "POST",
+                data,
+            }),
+        }),
+
+        // ── Admin / Superadmin user management ────────────────────────────────
+
         // GET all users (admin/superAdmin)
         getAllUsers: build.query({
-            query: (params) => ({
-                url: "/users",
-                method: "GET",
-                params,
-            }),
+            query: (params) => ({ url: "/users", method: "GET", params }),
             providesTags: [tagTypes.users],
         }),
 
@@ -44,6 +65,9 @@ const userApi = baseApi.injectEndpoints({
 });
 
 export const {
+    useGetMyProfileQuery,
+    useUpdateProfileMutation,
+    useChangePasswordMutation,
     useGetAllUsersQuery,
     useUpdateUserRoleMutation,
     useToggleBlockUserMutation,

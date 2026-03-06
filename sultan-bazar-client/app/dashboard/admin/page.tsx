@@ -4,7 +4,10 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { getUserInfo } from "@/services/auth.services";
-import { Package, ShoppingCart, Users, TrendingUp, Star, Bell, ChevronRight } from "lucide-react";
+import { useGetAllProductsQuery } from "@/redux/api/productApi";
+import { useGetAllOrdersQuery } from "@/redux/api/orderApi";
+import { useGetAllUsersQuery } from "@/redux/api/userApi";
+import { Package, ShoppingCart, Users, TrendingUp, Star, Bell, ChevronRight, CloudCog } from "lucide-react";
 
 const quickLinks = [
     { label: "Manage Products", href: "/dashboard/admin/products", icon: Package },
@@ -13,16 +16,33 @@ const quickLinks = [
     { label: "Analytics", href: "/dashboard/admin/analytics", icon: TrendingUp },
 ];
 
-const statCards = [
-    { label: "Total Products", value: "—", icon: Package, color: "#B5451B" },
-    { label: "Total Orders", value: "—", icon: ShoppingCart, color: "#D4860A" },
-    { label: "Total Users", value: "—", icon: Users, color: "#16a34a" },
-    { label: "Revenue", value: "—", icon: TrendingUp, color: "#7c3aed" },
-];
+
 
 export default function AdminDashboard() {
     const router = useRouter();
     const [userName, setUserName] = useState("");
+
+    const { data: productsData } = useGetAllProductsQuery({ limit: 1 });
+    const { data: ordersData } = useGetAllOrdersQuery(undefined);
+    const { data: usersData } = useGetAllUsersQuery({ limit: 1 });
+
+    // console.log(usersData)
+
+    const totalProducts = productsData?.meta?.total || productsData?.data?.meta?.total || productsData?.data?.total || 0;
+    const totalCommands = ordersData?.meta?.total || ordersData?.data?.meta?.total || ordersData?.data?.total || ordersData?.data?.length || ordersData?.length || 0;
+    const totalUsers = usersData?.total || 0;
+
+    const ordersArray = ordersData?.data?.data || ordersData?.data || ordersData || [];
+    const revenue = Array.isArray(ordersArray)
+        ? ordersArray.reduce((acc: number, order: any) => acc + (order.totalAmount || 0), 0)
+        : 0;
+
+    const statCards = [
+        { label: "Total Products", value: totalProducts, icon: Package, color: "#B5451B" },
+        { label: "Total Orders", value: totalCommands, icon: ShoppingCart, color: "#D4860A" },
+        { label: "Total Users", value: totalUsers, icon: Users, color: "#16a34a" },
+        // { label: "Revenue", value: `৳${revenue.toLocaleString()}`, icon: TrendingUp, color: "#7c3aed" },
+    ];
 
     useEffect(() => {
         const user = getUserInfo();

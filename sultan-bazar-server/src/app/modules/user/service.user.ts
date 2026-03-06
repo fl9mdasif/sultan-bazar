@@ -242,6 +242,71 @@ const deleteUser = async (targetId: string, callerId: string) => {
 };
 
 
+// ── PROFILE: Get own profile ─────────────────────────────────────────────────
+const getMyProfile = async (userId: string) => {
+    const user = await User.findById(userId).select('-password -savedAddresses').lean();
+    if (!user) throw new AppError(httpStatus.NOT_FOUND, 'User not found', 'User not found');
+    return user;
+};
+
+// ── PROFILE: Update own profile fields ───────────────────────────────────────
+const updateProfile = async (
+    userId: string,
+    data: {
+        username?: string;
+        contactNumber?: string;
+        address?: string;
+        profilePicture?: string;
+    },
+) => {
+    // If changing username, ensure it's not already taken by another user
+    if (data.username) {
+        const existing = await User.findOne({ username: data.username, _id: { $ne: userId } });
+        if (existing) {
+            throw new AppError(httpStatus.CONFLICT, 'Username already taken', 'Username conflict');
+        }
+    }
+
+    const updated = await User.findByIdAndUpdate(
+        userId,
+        { $set: data },
+        { new: true, select: '-password -savedAddresses' },
+    );
+
+    if (!updated) throw new AppError(httpStatus.NOT_FOUND, 'User not found', 'User not found');
+    return updated;
+};
+
+// ── PROFILE: Change password ──────────────────────────────────────────────────
+const changePassword = async (
+    userId: string,
+    oldPassword: string,
+    newPassword: string,
+) => {
+    const user = await User.findById(userId).select('+password');
+    if (!user) throw new AppError(httpStatus.NOT_FOUND, 'User not found', 'User not found');
+
+    // Verify old password
+    const matched = await (User as any).isPasswordMatched(oldPassword, user.password);
+    if (!matched) {
+        throw new AppError(httpStatus.UNAUTHORIZED, 'Current password is incorrect', 'Wrong password');
+    }
+
+    if (oldPassword === newPassword) {
+        throw new AppError(httpStatus.BAD_REQUEST, 'New password must differ from the current one', 'Same password');
+    }
+
+    const bcrypt = await import('bcrypt');
+    const hashed = await bcrypt.hash(newPassword, 12);
+
+    await User.findByIdAndUpdate(userId, {
+        password: hashed,
+        passwordChangedAt: new Date(),
+    });
+
+    return { success: true, message: 'Password changed successfully' };
+};
+
 
 export const userServices = {
     getAddresses,
@@ -249,7 +314,12 @@ export const userServices = {
     updateAddress,
     deleteAddress,
     setDefaultAddress,
-    autoSaveAddressFromOrder,   // exported so order service can call it
+    autoSaveAddressFromOrder,
+
+    // ── Profile ───────────────────────────────────────────────────────
+    getMyProfile,
+    updateProfile,
+    changePassword,
 
     // ── Superadmin ────────────────────────────────────────────────────
     getAllUsers,

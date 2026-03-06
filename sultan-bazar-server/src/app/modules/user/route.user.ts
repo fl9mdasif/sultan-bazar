@@ -55,6 +55,29 @@ router.get(
     userControllers.getAllUsers,
 );
 
+// ── Profile routes (all authenticated roles) ───────────────────────────────────
+
+// GET  /api/v1/users/me
+router.get(
+    '/me',
+    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    userControllers.getMyProfile,
+);
+
+// PATCH /api/v1/users/me
+router.patch(
+    '/me',
+    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    userControllers.updateProfile,
+);
+
+// POST /api/v1/users/me/change-password
+router.post(
+    '/me/change-password',
+    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    userControllers.changePassword,
+);
+
 // PATCH /api/v1/users/:id/role   — change a user's role
 router.patch(
     '/:id/role',
