@@ -26,7 +26,9 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useGetSingleProductQuery } from "@/redux/api/productApi";
+import { TProduct, TVariant } from "@/types/common";
 
 // ── Address Card ─────────────────────────────────────────────────────────────
 function AddressCard({
@@ -76,7 +78,15 @@ function AddressCard({
 // ── Main Page ────────────────────────────────────────────────────────────────
 export default function CheckoutPage() {
     const router = useRouter();
-    const { data: cartData, refetch, isLoading: cartLoading } = useGetCartQuery({});
+    const searchParams = useSearchParams();
+    const productIdParam = searchParams.get("productId");
+    const variantIdParam = searchParams.get("variantId");
+    const qtyParam = searchParams.get("qty");
+
+    const isDirectBuy = !!(productIdParam && variantIdParam && qtyParam);
+
+    const { data: cartData, refetch, isLoading: cartLoading } = useGetCartQuery({}, { skip: isDirectBuy });
+    const { data: singleProductData, isLoading: singleProductLoading } = useGetSingleProductQuery(productIdParam as string, { skip: !isDirectBuy });
     const { data: addressData, isLoading: addressesLoading } = useGetAddressesQuery({});
     const { data: profileData } = useGetMyProfileQuery({});
     const [placeOrder, { isLoading: isPlacing }] = usePlaceOrderMutation();
@@ -106,14 +116,35 @@ export default function CheckoutPage() {
         }
     }, [addresses]);
 
+    const directBuyItem = useMemo(() => {
+        if (!isDirectBuy || !singleProductData) return null;
+        const p = singleProductData as TProduct;
+        const variant = p.variants.find(v => v._id === variantIdParam || v.sku === variantIdParam);
+        if (!variant) return null;
+
+        return {
+            product: p,
+            variantId: variant._id,
+            quantity: Number(qtyParam) || 1,
+            _id: "direct-buy"
+        };
+    }, [isDirectBuy, singleProductData, variantIdParam, qtyParam]);
+
+    const checkoutItems = useMemo(() => {
+        if (isDirectBuy) {
+            return directBuyItem ? [directBuyItem] : [];
+        }
+        return cart?.items || [];
+    }, [isDirectBuy, directBuyItem, cart?.items]);
+
     const subtotal = useMemo(() => {
-        if (!cart?.items) return 0;
-        return cart.items.reduce((acc, item) => {
-            const variant = item.product.variants.find(v => v._id === item.variantId || v.sku === item.variantId);
+        return checkoutItems.reduce((acc, item) => {
+            const product = item.product;
+            const variant = product.variants.find(v => v._id === item.variantId || v.sku === item.variantId);
             const price = variant?.discountPrice ?? variant?.price ?? 0;
             return acc + (price * item.quantity);
         }, 0);
-    }, [cart?.items]);
+    }, [checkoutItems]);
 
     const shippingCharge = subtotal > 0 ? 60 : 0;
     const total = subtotal + shippingCharge;
@@ -138,10 +169,11 @@ export default function CheckoutPage() {
                 },
                 paymentMethod: "cod", // Cash On Delivery is the only active option
                 paymentStatus: "pending",
-                items: cart?.items.map(item => {
-                    const variant = item.product.variants.find(v => v._id === item.variantId || v.sku === item.variantId);
+                items: checkoutItems.map(item => {
+                    const product = item.product;
+                    const variant = product.variants.find(v => v._id === item.variantId || v.sku === item.variantId);
                     return {
-                        productId: item.product._id,
+                        productId: product._id,
                         variantId: item.variantId,
                         quantity: item.quantity,
                         price: variant?.discountPrice ?? variant?.price ?? 0
@@ -152,11 +184,15 @@ export default function CheckoutPage() {
                 totalAmount: total
             };
 
-            const res = await placeOrder(orderData).unwrap();
+            await placeOrder(orderData).unwrap();
             toast.success("Order placed successfully!");
-            router.push(`/dashboard/user/orders`);
-            refetch()
 
+            // Only refetch cart if we actually purchased from the cart
+            if (!isDirectBuy) {
+                refetch();
+            }
+
+            router.push(`/dashboard/user/orders`);
         } catch (err: any) {
             toast.error(err?.data?.message || "Failed to place order");
         }
@@ -181,7 +217,7 @@ export default function CheckoutPage() {
         }
     };
 
-    if (cartLoading || addressesLoading) {
+    if (cartLoading || addressesLoading || singleProductLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8]">
                 <Loader2 className="w-10 h-10 animate-spin text-[#B5451B]" />
@@ -189,9 +225,22 @@ export default function CheckoutPage() {
         );
     }
 
-    if (!cart?.items || cart.items.length === 0) {
+    if (!isDirectBuy && (!cart?.items || cart.items.length === 0)) {
         router.push("/dashboard/user/orders");
         return null;
+    }
+
+    if (isDirectBuy && !directBuyItem) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8]">
+                <div className="text-center">
+                    <p className="text-red-500 font-bold mb-4">Product details not found.</p>
+                    <Link href="/products">
+                        <Button style={{ background: "#B5451B" }}>Back to Shop</Button>
+                    </Link>
+                </div>
+            </div>
+        );
     }
 
     return (
@@ -199,13 +248,15 @@ export default function CheckoutPage() {
             <div className="container mx-auto px-4 lg:px-8 max-w-7xl">
                 {/* Header */}
                 <div className="mb-10">
-                    <Link href="/cart" className="inline-flex items-center text-sm font-semibold text-[#B5451B] hover:gap-2 transition-all gap-1 mb-4">
-                        <ChevronLeft className="w-4 h-4" /> Back to Cart
+                    <Link href={isDirectBuy ? `/products/${productIdParam}` : "/cart"} className="inline-flex items-center text-sm font-semibold text-[#B5451B] hover:gap-2 transition-all gap-1 mb-4">
+                        <ChevronLeft className="w-4 h-4" /> Back to {isDirectBuy ? "Product" : "Cart"}
                     </Link>
                     <h1 className="text-4xl font-extrabold text-gray-900 leading-tight">
                         Secure <span style={{ color: "#B5451B" }}>Checkout</span>
                     </h1>
-                    <p className="text-gray-500 font-medium tracking-wide">Finalize your order and get it delivered to your doorstep</p>
+                    <p className="text-gray-500 font-medium tracking-wide">
+                        {isDirectBuy ? "Complete your direct purchase" : "Finalize your cart and get it delivered to your doorstep"}
+                    </p>
                 </div>
 
                 <div className="grid lg:grid-cols-12 gap-10 items-start">
@@ -368,16 +419,17 @@ export default function CheckoutPage() {
                                 <h3 className="text-2xl font-black text-gray-900 mb-8 tracking-tight">Order Summary</h3>
 
                                 <div className="space-y-6 max-h-[300px] overflow-y-auto pr-2 scrollbar-hide">
-                                    {cart.items.map((item, idx) => {
-                                        const variant = item.product.variants.find(v => v._id === item.variantId || v.sku === item.variantId);
+                                    {checkoutItems.map((item, idx) => {
+                                        const product = item.product;
+                                        const variant = product.variants.find(v => v._id === item.variantId || v.sku === item.variantId);
                                         const price = variant?.discountPrice ?? variant?.price ?? 0;
                                         return (
                                             <div key={idx} className="flex gap-4">
                                                 <div className="relative w-16 h-16 rounded-xl overflow-hidden border border-orange-100 bg-white flex-shrink-0">
-                                                    <Image src={item.product.thumbnail} alt="" fill className="object-cover" />
+                                                    <Image src={product.thumbnail} alt="" fill className="object-cover" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-sm font-bold text-gray-900 leading-tight mb-1 truncate">{item.product.name}</p>
+                                                    <p className="text-sm font-bold text-gray-900 leading-tight mb-1 truncate">{product.name}</p>
                                                     <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-1">{variant?.name} × {item.quantity}</p>
                                                     <p className="text-sm font-black text-[#B5451B]">৳{price * item.quantity}</p>
                                                 </div>
@@ -413,7 +465,7 @@ export default function CheckoutPage() {
 
                                 <Button
                                     onClick={handlePlaceOrder}
-                                    disabled={isPlacing || cart.items.length === 0}
+                                    disabled={isPlacing || checkoutItems.length === 0}
                                     className="w-full py-8 rounded-[1.5rem] text-xl font-black shadow-2xl hover:shadow-[#B5451B]/20 transition-all active:scale-[0.98] group flex items-center justify-center gap-3 cursor-pointer"
                                     style={{ background: "linear-gradient(135deg, #B5451B, #D4860A)", color: "white" }}
                                 >

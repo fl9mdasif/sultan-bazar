@@ -3,10 +3,11 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
     ShoppingCart, Heart, Star, ChevronRight, Minus, Plus,
-    Truck, Shield, RotateCcw, Share2, CheckCircle, Tag, Loader2
+    Truck, Shield, RotateCcw, Share2, CheckCircle, Tag, Loader2,
+    Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGetSingleProductQuery, useGetAllProductsQuery } from "@/redux/api/productApi";
@@ -29,6 +30,7 @@ function Stars({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) 
 
 export default function ProductDetailPage() {
     const params = useParams();
+    const router = useRouter();
     const id = params.id as string;
 
     const { data: singleProduct, isLoading, isError } = useGetSingleProductQuery(id);
@@ -87,8 +89,14 @@ export default function ProductDetailPage() {
         : 0;
     const inStock = (selectedVariant.isAvailable ?? true) && selectedVariant.stock > 0;
 
-    const handleAddToCart = async () => {
+    const handleAddToCart = async (redirect = false) => {
         if (!inStock || isAddingToCart) return;
+
+        if (redirect) {
+            // "Buy Now" - direct to checkout with single product details
+            router.push(`/checkout?productId=${p._id}&variantId=${selectedVariant._id}&qty=${qty}`);
+            return;
+        }
 
         try {
             await addToCart({
@@ -284,22 +292,36 @@ export default function ProductDetailPage() {
                                     </button>
                                 </div>
 
-                                <Button
-                                    onClick={handleAddToCart}
-                                    disabled={!inStock || isAddingToCart}
-                                    className="flex-1 w-full text-white font-black rounded-2xl h-14 text-lg flex items-center justify-center gap-3 transition-all shadow-xl hover:shadow-[#B5451B]/20 active:scale-95"
-                                    style={{
-                                        background: addedToCart ? "#22c55e" : inStock ? "linear-gradient(135deg, #B5451B, #D4860A)" : "#d1d5db"
-                                    }}
-                                >
-                                    {isAddingToCart ? (
-                                        <Loader2 className="w-6 h-6 animate-spin" />
-                                    ) : addedToCart ? (
-                                        <><CheckCircle className="w-6 h-6" /> Added Successfully</>
-                                    ) : (
-                                        <><ShoppingCart className="w-6 h-6" /> Add to Cart — ৳{price * qty}</>
-                                    )}
-                                </Button>
+                                <div className="flex-1 w-full flex flex-col sm:flex-row gap-3">
+                                    <Button
+                                        onClick={() => handleAddToCart(false)}
+                                        disabled={!inStock || isAddingToCart}
+                                        className="flex-1 text-white font-black rounded-2xl h-14 text-base flex items-center justify-center gap-2 transition-all shadow-md hover:shadow-[#B5451B]/10 active:scale-95 border border-transparent"
+                                        style={{
+                                            background: addedToCart ? "#22c55e" : inStock ? "#B5451B" : "#d1d5db"
+                                        }}
+                                    >
+                                        {isAddingToCart ? (
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                        ) : addedToCart ? (
+                                            <><CheckCircle className="w-5 h-5" /> Added Successfully</>
+                                        ) : (
+                                            <><ShoppingCart className="w-5 h-5" /> Add to Cart</>
+                                        )}
+                                    </Button>
+
+                                    <Button
+                                        onClick={() => handleAddToCart(true)}
+                                        disabled={!inStock || isAddingToCart}
+                                        className="flex-1 text-white font-black rounded-2xl h-14 text-base flex items-center justify-center gap-2 transition-all shadow-xl hover:shadow-[#D4860A]/20 active:scale-95 border border-transparent"
+                                        style={{
+                                            background: inStock ? "linear-gradient(135deg, #D4860A, #B5451B)" : "#d1d5db"
+                                        }}
+                                    >
+                                        <Zap className="w-5 h-5 fill-current" />
+                                        Buy Now
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="flex gap-4 pt-2">
