@@ -8,11 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { getUserInfo, removeUser, isLoggedIn } from "@/services/auth.services";
+import { useGetCartQuery } from "@/redux/api/cartApi";
+import Image from "next/image";
 
 const navLinks = [
     { label: "Home", href: "/" },
     { label: "Products", href: "/products" },
-    { label: "Categories", href: "/categories" },
+    // { label: "Categories", href: "/categories" },
     { label: "About", href: "/about" },
     { label: "Contact", href: "/contact" },
 ];
@@ -26,6 +28,11 @@ export default function Navbar() {
     const [userName, setUserName] = useState("");
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    const { data: cartData } = useGetCartQuery({});
+
+
+    const cartLength = cartData?.items?.length || 0;
 
     useEffect(() => {
         const handler = () => setScrolled(window.scrollY > 10);
@@ -75,14 +82,14 @@ export default function Navbar() {
                 <div className="flex items-center justify-between h-16 gap-4">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-                        <span className="text-2xl">🪔</span>
-                        <div className="flex flex-col leading-tight">
-                            <span className="text-xl font-extrabold tracking-tight" style={{ color: "#B5451B" }}>
-                                Sultan Bazar
-                            </span>
-                            <span className="text-[10px] text-amber-600 font-medium hidden sm:block">
-                                স্বাদে খাঁটি, মানে নিখুঁত
-                            </span>
+                        <div className="relative w-32 sm:w-44 h-10 sm:h-14">
+                            <Image
+                                src="/logo.png"
+                                alt="Sultan Bazar"
+                                fill
+                                className="object-contain object-left"
+                                priority
+                            />
                         </div>
                     </Link>
 
@@ -101,27 +108,7 @@ export default function Navbar() {
 
                     {/* Right Side */}
                     <div className="flex items-center gap-2">
-                        {/* Search — desktop */}
-                        <div className="hidden md:flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-3 py-1.5 w-48 lg:w-60 focus-within:border-[#B5451B] focus-within:ring-1 focus-within:ring-[#B5451B] transition-all">
-                            <Search className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                            <input
-                                className="bg-transparent text-sm outline-none w-full placeholder:text-gray-400"
-                                placeholder="Search products..."
-                            />
-                        </div>
 
-                        {/* Search icon mobile */}
-                        <button
-                            className="md:hidden p-2 text-gray-600 hover:text-[#B5451B] transition-colors"
-                            onClick={() => setSearchOpen(!searchOpen)}
-                        >
-                            <Search className="w-5 h-5" />
-                        </button>
-
-                        {/* Wishlist */}
-                        <Link href="/wishlist" className="hidden sm:flex p-2 text-gray-600 hover:text-[#B5451B] transition-colors relative">
-                            <Heart className="w-5 h-5" />
-                        </Link>
 
                         {/* Cart */}
                         <Link href="/cart" className="p-2 text-gray-600 hover:text-[#B5451B] transition-colors relative">
@@ -130,7 +117,7 @@ export default function Navbar() {
                                 className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-[10px] p-0 font-bold"
                                 style={{ background: "#B5451B", color: "white" }}
                             >
-                                2
+                                {cartLength}
                             </Badge>
                         </Link>
 
@@ -193,9 +180,15 @@ export default function Navbar() {
                             <SheetContent side="left" className="w-72 p-0">
                                 <div className="flex flex-col h-full">
                                     {/* Header */}
-                                    <div className="flex items-center gap-2 px-6 py-5 border-b" style={{ borderColor: "#B5451B20" }}>
-                                        <span className="text-2xl">🪔</span>
-                                        <span className="text-xl font-extrabold" style={{ color: "#B5451B" }}>Sultan Bazar</span>
+                                    <div className="px-6 py-5 border-b" style={{ borderColor: "#B5451B20" }}>
+                                        <div className="relative w-32 h-10">
+                                            <Image
+                                                src="/logo.png"
+                                                alt="Sultan Bazar"
+                                                fill
+                                                className="object-contain object-left"
+                                            />
+                                        </div>
                                     </div>
 
                                     {/* Logged-in user info in mobile drawer */}
@@ -212,13 +205,7 @@ export default function Navbar() {
                                         </div>
                                     )}
 
-                                    {/* Search */}
-                                    <div className="px-4 py-3 border-b">
-                                        <div className="flex items-center gap-2 bg-gray-50 border rounded-full px-3 py-2">
-                                            <Search className="w-4 h-4 text-gray-400" />
-                                            <input className="bg-transparent text-sm outline-none w-full placeholder:text-gray-400" placeholder="Search products..." />
-                                        </div>
-                                    </div>
+
 
                                     {/* Nav links */}
                                     <nav className="flex-1 px-2 py-4">
@@ -269,18 +256,7 @@ export default function Navbar() {
                 </div>
 
                 {/* Mobile search bar (expanded) */}
-                {searchOpen && (
-                    <div className="md:hidden pb-3 px-1">
-                        <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-full px-4 py-2 focus-within:border-[#B5451B]">
-                            <Search className="w-4 h-4 text-gray-400" />
-                            <input
-                                className="bg-transparent text-sm outline-none w-full placeholder:text-gray-400"
-                                placeholder="Search products..."
-                                autoFocus
-                            />
-                        </div>
-                    </div>
-                )}
+
             </div>
         </header>
     );

@@ -9,22 +9,22 @@ const CONTACT_INFO = [
     {
         icon: <MapPin className="w-5 h-5" />,
         title: "Our Office",
-        lines: ["Sultan Bazar Complex, CDA Avenue", "Anderkilla, Chittagong 4000", "Bangladesh"],
+        lines: ["house 26, road 03, PC culture housing societ", "Mohammedpur, Dhaka 1216", "Bangladesh"],
     },
     {
         icon: <Phone className="w-5 h-5" />,
         title: "Call Us",
-        lines: ["+880 1712-345678", "+880 31-234567"],
+        lines: ["+880 1711-229443"],
     },
     {
         icon: <Mail className="w-5 h-5" />,
         title: "Email Us",
-        lines: ["info@sultanbazar.com.bd", "support@sultanbazar.com.bd"],
+        lines: ["asr.globaltrade.bd@gmail.com"],
     },
     {
         icon: <Clock className="w-5 h-5" />,
         title: "Working Hours",
-        lines: ["Sunday – Thursday: 9am – 6pm", "Friday: 9am – 12pm", "Saturday: Closed"],
+        lines: ["Saturday – Thursday: 9am – 9pm", "Friday: Closed"],
     },
 ];
 
@@ -116,9 +116,9 @@ export default function ContactPage() {
                             <p className="font-bold text-gray-900 mb-3 text-sm">Follow Us</p>
                             <div className="flex gap-3">
                                 {[
-                                    { icon: <Facebook className="w-4 h-4" />, label: "Facebook", href: "#" },
-                                    { icon: <Instagram className="w-4 h-4" />, label: "Instagram", href: "#" },
-                                    { icon: <MessageSquare className="w-4 h-4" />, label: "WhatsApp", href: "#" },
+                                    { icon: <Facebook className="w-4 h-4" />, label: "Facebook", href: "https://www.facebook.com/profile.php?id=61581883173632" },
+                                    // { icon: <Instagram className="w-4 h-4" />, label: "Instagram", href: "https://www.facebook.com/profile.php?id=61581883173632" },
+                                    { icon: <MessageSquare className="w-4 h-4" />, label: "WhatsApp", href: "https://wa.me/8801711229443" },
                                 ].map((s) => (
                                     <a key={s.label} href={s.href}
                                         className="w-9 h-9 rounded-full border flex items-center justify-center transition-all hover:text-white"
@@ -260,8 +260,8 @@ export default function ContactPage() {
                     <div className="absolute inset-0 flex items-center justify-center">
                         <div className="text-center">
                             <MapPin className="w-12 h-12 mx-auto mb-3" style={{ color: "#B5451B" }} />
-                            <p className="font-bold text-gray-800 text-lg">Sultan Bazar Complex</p>
-                            <p className="text-gray-600 text-sm">CDA Avenue, Anderkilla, Chittagong 4000</p>
+                            <p className="font-bold text-gray-800 text-lg">ASR Global Trade</p>
+                            <p className="text-gray-600 text-sm italic">house 26, road 03, PC culture housing societ, Mohammedpur, Dhaka 1216</p>
                         </div>
                     </div>
                 </div>

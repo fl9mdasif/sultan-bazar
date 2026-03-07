@@ -103,11 +103,14 @@ export default function SignUpPage() {
                 <div className="absolute -bottom-20 -left-20 w-72 h-72 rounded-full opacity-10 border-2 border-white" />
 
                 <div className="relative z-10">
-                    <Link href="/" className="flex items-center gap-3">
-                        <span className="text-3xl">🪔</span>
-                        <div>
-                            <p className="text-white text-2xl font-extrabold tracking-tight">Sultan Bazar</p>
-                            <p className="text-orange-200 text-xs font-medium">স্বাদে খাঁটি, মানে নিখুঁত</p>
+                    <Link href="/" className="inline-block">
+                        <div className="relative w-48 h-12">
+                            <Image
+                                src="/logo.png"
+                                alt="Sultan Bazar"
+                                fill
+                                className="object-contain object-left"
+                            />
                         </div>
                     </Link>
                 </div>
@@ -149,8 +152,14 @@ export default function SignUpPage() {
                 <div className="w-full max-w-md">
                     {/* Mobile logo */}
                     <Link href="/" className="flex items-center gap-2 mb-6 lg:hidden">
-                        <span className="text-2xl">🪔</span>
-                        <span className="text-xl font-extrabold" style={{ color: "#B5451B" }}>Sultan Bazar</span>
+                        <div className="relative w-32 h-10">
+                            <Image
+                                src="/logo.png"
+                                alt="Sultan Bazar"
+                                fill
+                                className="object-contain object-left"
+                            />
+                        </div>
                     </Link>
 
                     {done ? (

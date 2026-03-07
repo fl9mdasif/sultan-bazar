@@ -216,7 +216,12 @@ const updateVariant = async (
 };
 
 // ── Add Review Rating ────────────────────────────────────────────────────────
-const addReviewRating = async (productId: string, rating: number) => {
+const addReviewRating = async (
+    productId: string,
+    rating: number,
+    orderId?: string,
+    variantId?: string,
+) => {
     if (rating < 1 || rating > 5) {
         throw new AppError(httpStatus.BAD_REQUEST, 'Rating must be between 1 and 5', 'Invalid rating');
     }
@@ -226,14 +231,30 @@ const addReviewRating = async (productId: string, rating: number) => {
         throw new AppError(httpStatus.NOT_FOUND, 'Product not found', 'No product found');
     }
 
-    const currentTotalRating = product.rating * product.reviewCount;
-    const newReviewCount = product.reviewCount + 1;
+    const currentTotalRating = (product.rating || 0) * (product.reviewCount || 0);
+    const newReviewCount = (product.reviewCount || 0) + 1;
     const newAverageRating = (currentTotalRating + rating) / newReviewCount;
 
     product.rating = Number(newAverageRating.toFixed(1));
     product.reviewCount = newReviewCount;
 
     await product.save();
+
+    // If order details are provided, mark that specific item as reviewed
+    if (orderId && variantId) {
+        const { Order } = require('../order/model.order');
+        await Order.findOneAndUpdate(
+            {
+                _id: orderId,
+                'items.product': productId,
+                'items.variant.variantId': variantId,
+            },
+            {
+                $set: { 'items.$.isReviewed': true },
+            },
+        );
+    }
+
     return product;
 };
 

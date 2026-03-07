@@ -43,11 +43,11 @@ const VALUES = [
     },
 ];
 
-const TEAM = [
-    { emoji: "👨‍💼", name: "Mohammad Sultan", role: "Founder & CEO", desc: "30+ years of experience in the food industry, pioneering authentic Bangladeshi flavors." },
-    { emoji: "👩‍🍳", name: "Fatema Khatun", role: "Head of Quality", desc: "Ensuring every product meets our highest standards before reaching your family." },
-    { emoji: "👨‍🌾", name: "Rahim Uddin", role: "Sourcing Manager", desc: "Building direct relationships with the finest farmers across Bangladesh." },
-];
+// const TEAM = [
+//     { emoji: "👨‍💼", name: "Mohammad Sultan", role: "Founder & CEO", desc: "30+ years of experience in the food industry, pioneering authentic Bangladeshi flavors." },
+//     { emoji: "👩‍🍳", name: "Fatema Khatun", role: "Head of Quality", desc: "Ensuring every product meets our highest standards before reaching your family." },
+//     { emoji: "👨‍🌾", name: "Rahim Uddin", role: "Sourcing Manager", desc: "Building direct relationships with the finest farmers across Bangladesh." },
+// ];
 
 export default function AboutPage() {
     return (
@@ -93,7 +93,7 @@ export default function AboutPage() {
                         </h2>
                         <div className="space-y-4 text-gray-600 leading-relaxed">
                             <p>
-                                Sultan Bazar was founded in 1994 in the heart of Chittagong with a single mission —
+                                Sultan Bazar was founded in 1994 in the heart of Dhaka with a single mission —
                                 to provide Bangladeshi families with the purest, most authentic food products at fair prices.
                                 What started as a small mustard‑oil producer has grown into one of the country's most
                                 trusted brands.
@@ -181,7 +181,7 @@ export default function AboutPage() {
                 </section>
 
                 {/* ── Meet the Team ── */}
-                <section>
+                {/* <section>
                     <div className="text-center mb-10">
                         <p className="text-xs font-semibold uppercase tracking-widest mb-2" style={{ color: "#D4860A" }}>The People Behind</p>
                         <h2 className="text-3xl font-bold text-gray-900">
@@ -203,7 +203,7 @@ export default function AboutPage() {
                             </div>
                         ))}
                     </div>
-                </section>
+                </section> */}
 
                 {/* ── CTA ── */}
                 <section className="rounded-3xl overflow-hidden relative text-center text-white">

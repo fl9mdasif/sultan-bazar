@@ -12,29 +12,40 @@ interface ReviewModalProps {
     onClose: () => void;
     productId: string;
     productName: string;
+    orderId?: string;
+    variantId?: string;
 }
 
-export function ReviewModal({ isOpen, onClose, productId, productName }: ReviewModalProps) {
+export function ReviewModal({ isOpen, onClose, productId, productName, orderId, variantId }: ReviewModalProps) {
     const [rating, setRating] = useState<number>(0);
     const [hoveredRating, setHoveredRating] = useState<number>(0);
     const [addReview, { isLoading }] = useAddReviewMutation();
 
     const handleSubmit = async () => {
+        console.log("Submitting review...", { productId, rating, orderId, variantId });
         if (rating < 1 || rating > 5) {
             toast.error("Please select a rating between 1 and 5 stars.", { position: "top-right" });
             return;
         }
 
         try {
-            const res = await addReview({ productId, data: { rating } }).unwrap();
-            if (res.success) {
-                toast.success("Thank you for your review!", { position: "top-right" });
-                setRating(0);
-                onClose();
-            }
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            console.log("Calling addReview mutation...");
+            const result = await addReview({
+                productId,
+                data: {
+                    rating,
+                    orderId: orderId || productId, // Fallback if needed
+                    variantId: variantId
+                }
+            }).unwrap();
+
+            console.log("Review submitted successfully:", result);
+            toast.success("Review submitted successfully!", { position: "top-right" });
+            setRating(0); // Reset rating
+            onClose(); // Close the modal
         } catch (error: any) {
-            toast.error(error?.data?.message || "Failed to submit review", { position: "top-right" });
+            console.error("Failed to submit review:", error);
+            toast.error(error?.data?.message || "Failed to submit review.");
         }
     };
 
@@ -62,8 +73,8 @@ export function ReviewModal({ isOpen, onClose, productId, productName }: ReviewM
                             >
                                 <Star
                                     className={`w-10 h-10 ${star <= (hoveredRating || rating)
-                                            ? "fill-[#D4860A] text-[#D4860A]"
-                                            : "fill-gray-100 text-gray-300"
+                                        ? "fill-[#D4860A] text-[#D4860A]"
+                                        : "fill-gray-100 text-gray-300"
                                         } transition-colors`}
                                 />
                             </button>

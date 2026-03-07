@@ -98,6 +98,7 @@ export interface TOrderItem {
   variant: TOrderVariantSnapshot;
   quantity: number;
   totalPrice: number;
+  isReviewed?: boolean;
 }
 
 export interface TShippingAddress {

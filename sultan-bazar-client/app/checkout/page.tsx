@@ -154,9 +154,9 @@ export default function CheckoutPage() {
 
             const res = await placeOrder(orderData).unwrap();
             toast.success("Order placed successfully!");
+            router.push(`/dashboard/user/orders`);
             refetch()
 
-            router.push(`/dashboard/user/orders`);
         } catch (err: any) {
             toast.error(err?.data?.message || "Failed to place order");
         }
@@ -190,7 +190,7 @@ export default function CheckoutPage() {
     }
 
     if (!cart?.items || cart.items.length === 0) {
-        router.push("/cart");
+        router.push("/dashboard/user/orders");
         return null;
     }
 

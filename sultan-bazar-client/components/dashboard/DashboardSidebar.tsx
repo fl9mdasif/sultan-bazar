@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { getUserInfo, removeUser } from "@/services/auth.services";
 import {
@@ -30,10 +31,8 @@ const navByRole: Record<string, { label: string; href: string; icon: React.Eleme
     ],
     user: [
         { label: "Dashboard", href: "/dashboard/user", icon: LayoutDashboard },
-        { label: "My Orders", href: "/dashboard/user/orders", icon: ShoppingCart },
-        { label: "Wishlist", href: "/wishlist", icon: Heart },
-        // { label: "Addresses", href: "/dashboard/user/addresses", icon: MapPin },
         { label: "Settings", href: "/dashboard/user/settings", icon: Settings },
+        // { label: "My Orders", href: "/dashboard/user/orders", icon: ShoppingCart },
     ],
 };
 
@@ -90,8 +89,15 @@ export default function DashboardSidebar() {
             {/* Brand */}
             <div className="px-5 py-5 border-b border-gray-100">
                 <Link href="/" className="flex items-center gap-2">
-                    <span className="text-xl">🪔</span>
-                    <span className="font-extrabold text-base" style={{ color: "#B5451B" }}>Sultan Bazar</span>
+                    <div className="relative w-32 h-10">
+                        <Image
+                            src="/logo.png"
+                            alt="Sultan Bazar"
+                            fill
+                            className="object-contain object-left"
+                            priority
+                        />
+                    </div>
                 </Link>
             </div>
 
