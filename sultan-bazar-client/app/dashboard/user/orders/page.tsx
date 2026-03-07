@@ -131,7 +131,7 @@ export default function UserOrdersPage() {
                                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                     const productObj = item.product as any;
                                     const productName = productObj?.name || "Unknown Product";
-                                    const productImage = productObj?.thumbnail || "https://placehold.co/100x100?text=No+Image";
+                                    const productImage = productObj?.thumbnail
                                     const productIdent = productObj?._id || "unknown";
 
                                     return (

@@ -4,6 +4,7 @@ import { categoryRoutes } from '../modules/category/router.category';
 import { productRoutes } from '../modules/product/router.product';
 import { orderRoutes } from '../modules/order/route.order';
 import { userRoutes } from '../modules/user/route.user';
+import { cartRoutes } from '../modules/cart/route.cart';
 
 const router = Router();
 
@@ -27,6 +28,10 @@ const moduleRoute = [
   {
     path: '/users',
     route: userRoutes,
+  },
+  {
+    path: '/carts',
+    route: cartRoutes,
   },
 ];
 

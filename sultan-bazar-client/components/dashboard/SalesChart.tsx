@@ -70,7 +70,7 @@ export default function SalesChart() {
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                                     <Tooltip
                                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                        formatter={(value: number) => [`৳${value.toLocaleString()}`, 'Revenue']}
+                                        formatter={(value: any) => [`৳${Number(value).toLocaleString()}`, 'Revenue']}
                                         labelStyle={{ fontWeight: 'bold', color: '#374151', marginBottom: '8px' }}
                                     />
                                     <Area type="monotone" dataKey="revenue" stroke="#B5451B" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
@@ -90,7 +90,7 @@ export default function SalesChart() {
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                                     <Tooltip
                                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                        formatter={(value: number) => [value, 'Orders']}
+                                        formatter={(value: any) => [value, 'Orders']}
                                         cursor={{ fill: '#f9fafb' }}
                                         labelStyle={{ fontWeight: 'bold', color: '#374151', marginBottom: '8px' }}
                                     />
