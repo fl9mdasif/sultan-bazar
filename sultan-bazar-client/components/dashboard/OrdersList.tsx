@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Package, Star, Clock, CheckCircle, Truck, PackageOpen } from "lucide-react";
+import { Package, Star, Clock, CheckCircle, Truck, PackageOpen, XCircle, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { ReviewModal } from "@/components/dashboard/ReviewModal";
 import Link from "next/link";
 import { TOrder, TOrderItem } from "@/types/common";
+import { useCancelOrderMutation } from "@/redux/api/orderApi";
+import { toast } from "sonner";
 
 const TABS = [
     { id: "all", label: "All Orders", icon: Package },
@@ -33,6 +35,20 @@ export function OrdersList({ orders, title, description, showTabs = true }: Orde
     const openReviewModal = (productId: string, productName: string, orderId: string, variantId: string) => {
         setReviewProduct({ id: productId, name: productName, orderId, variantId });
         setIsReviewOpen(true);
+    };
+
+    // Cancellation state
+    const [cancellingOrderId, setCancellingOrderId] = useState<string | null>(null);
+    const [cancelOrder, { isLoading: isCancelling }] = useCancelOrderMutation();
+
+    const handleCancelOrder = async (orderId: string) => {
+        try {
+            await cancelOrder({ id: orderId, data: { reason: "Cancelled by user" } }).unwrap();
+            toast.success("Order cancelled successfully");
+            setCancellingOrderId(null);
+        } catch (err: any) {
+            toast.error(err?.data?.message || "Failed to cancel order");
+        }
     };
 
     // Filter orders based on active tab
@@ -113,13 +129,45 @@ export function OrdersList({ orders, title, description, showTabs = true }: Orde
                                     <span className="px-3 py-1 bg-gray-100 text-gray-700 rounded-lg text-xs font-semibold capitalize border border-gray-200">
                                         {order.paymentMethod === 'cod' ? 'Cash on Delivery' : order.paymentMethod}
                                     </span>
-                                    <span className={`px-3 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider whitespace-nowrap
-                                        ${order.orderStatus === 'delivered' ? 'bg-green-50 text-green-700 border border-green-200' :
-                                            order.orderStatus === 'pending' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
-                                                order.orderStatus === 'cancelled' ? 'bg-red-50 text-red-700 border border-red-200' :
-                                                    'bg-blue-50 text-blue-700 border border-blue-200'}`}>
-                                        {order.orderStatus}
-                                    </span>
+                                    <div className="flex items-center gap-2">
+                                        <span className={`px-3 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider whitespace-nowrap
+                                            ${order.orderStatus === 'delivered' ? 'bg-green-50 text-green-700 border border-green-200' :
+                                                order.orderStatus === 'pending' ? 'bg-orange-50 text-orange-700 border border-orange-200' :
+                                                    order.orderStatus === 'cancelled' ? 'bg-red-50 text-red-700 border border-red-200' :
+                                                        'bg-blue-50 text-blue-700 border border-blue-200'}`}>
+                                            {order.orderStatus}
+                                        </span>
+                                        {/* Cancel Button - shown only for pending/confirmed and if not currently confirming this specific order */}
+                                        {(order.orderStatus === 'pending' || order.orderStatus === 'confirmed') && (
+                                            <div className="flex items-center gap-2">
+                                                {cancellingOrderId === order._id ? (
+                                                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2 duration-300">
+                                                        <button
+                                                            disabled={isCancelling}
+                                                            onClick={() => handleCancelOrder(order._id)}
+                                                            className="text-[10px] font-bold text-red-600 hover:text-red-700 flex items-center gap-1 px-2 py-1 bg-red-50 rounded-md border border-red-100 transition-colors"
+                                                        >
+                                                            {isCancelling ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirm"}
+                                                        </button>
+                                                        <button
+                                                            disabled={isCancelling}
+                                                            onClick={() => setCancellingOrderId(null)}
+                                                            className="text-[10px] font-bold text-gray-400 hover:text-gray-600"
+                                                        >
+                                                            No, I changed my mind
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => setCancellingOrderId(order._id)}
+                                                        className="text-[10px] font-bold text-gray-400 hover:text-red-500 flex items-center gap-1 px-2 py-1 hover:bg-red-50 rounded-md transition-all group"
+                                                    >
+                                                        <XCircle className="w-3 h-3 group-hover:scale-110 transition-transform" /> Cancel
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -150,7 +198,7 @@ export function OrdersList({ orders, title, description, showTabs = true }: Orde
                                                     <div className="flex items-center gap-3 mt-1.5">
                                                         <span className="px-2 py-0.5 bg-gray-100 rounded text-xs text-gray-600 font-medium">Vol: {variantName}</span>
                                                         <span className="text-sm font-semibold text-gray-900 border-l border-gray-200 pl-3">
-                                                            ৳{item.variant?.price || 0}
+                                                            ৳{item.variant?.discountPrice || item.variant?.price || 0}
                                                             <span className="text-gray-400 font-medium text-sm ml-1">x {item.quantity}</span>
                                                         </span>
                                                     </div>

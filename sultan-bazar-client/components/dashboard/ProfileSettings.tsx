@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useGetMyProfileQuery } from "@/redux/api/userApi";
-import { User, Lock, MapPin, Loader2, ChevronRight, Mail, Phone, ShieldCheck } from "lucide-react";
+import { useGetMyProfileQuery, useGetAddressesQuery, useDeleteAddressMutation } from "@/redux/api/userApi";
+import { User, Lock, MapPin, Loader2, ChevronRight, Mail, Phone, ShieldCheck, Trash2, Edit2, Home, Briefcase } from "lucide-react";
 import Image from "next/image";
 import { ProfileUpdateModal } from "./ProfileUpdateModal";
 import { ChangePasswordModal } from "./ChangePasswordModal";
 import { AddressModal } from "./AddressModal";
+import { TSavedAddress } from "@/types/common";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const ROLE_STYLES: Record<string, string> = {
     user: "bg-gray-100 text-gray-600",
@@ -25,6 +28,13 @@ export default function ProfileSettings() {
     const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
     const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
     const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+    const [addressToEdit, setAddressToEdit] = useState<TSavedAddress | undefined>(undefined);
+
+    const { data: addressesData, isLoading: addressesLoading } = useGetAddressesQuery(undefined);
+    const [deleteAddress] = useDeleteAddressMutation();
+
+    // console.log(addressesData);
+    const addresses = addressesData as any || [];
 
     if (isLoading) {
         return (
@@ -84,22 +94,81 @@ export default function ProfileSettings() {
                     <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-[#B5451B] group-hover:translate-x-1 transition-all" />
                 </button>
 
-                {/* Shipping Address */}
-                <button
-                    onClick={() => setIsAddressModalOpen(true)}
-                    className="w-full text-left bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-orange-200 hover:shadow-md transition-all group flex items-center justify-between"
-                >
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
-                            <MapPin className="w-6 h-6 text-blue-600" />
+                {/* Shipping Addresses Section */}
+                <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="p-6 border-b border-gray-50 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                                <MapPin className="w-5 h-5 text-blue-600" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 leading-none mb-1">Shipping Addresses</h3>
+                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Manage where we deliver</p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="font-bold text-gray-900">Shipping Address</h3>
-                            <p className="text-xs text-gray-400 truncate max-w-[200px] sm:max-w-xs">{profile?.address || "Add a delivery address"}</p>
-                        </div>
+                        <Button
+                            onClick={() => { setAddressToEdit(undefined); setIsAddressModalOpen(true); }}
+                            variant="ghost"
+                            className="text-[#B5451B] hover:bg-orange-50 font-bold rounded-xl h-9"
+                        >
+                            Add New
+                        </Button>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-[#B5451B] group-hover:translate-x-1 transition-all" />
-                </button>
+                    <div className="divide-y divide-gray-50">
+                        {addresses.length > 0 ? (
+                            addresses.map((addr: TSavedAddress) => {
+                                const LabelIcon = addr.label === "Home" ? Home : addr.label === "Office" ? Briefcase : MapPin;
+                                return (
+                                    <div key={addr._id} className="p-5 flex items-start justify-between group hover:bg-gray-50 transition-all">
+                                        <div className="flex gap-4">
+                                            <div className="w-10 h-10 rounded-xl border border-gray-100 flex items-center justify-center bg-white group-hover:border-orange-200 group-hover:shadow-sm transition-all">
+                                                <LabelIcon className="w-5 h-5 text-gray-400 group-hover:text-[#B5451B]" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <span className="font-bold text-gray-900 text-sm tracking-tight">{addr.fullName}</span>
+                                                    <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 tracking-widest">{addr.label}</span>
+                                                    {addr.isDefault && <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-orange-100 text-[#B5451B] tracking-widest">Default</span>}
+                                                </div>
+                                                <p className="text-xs text-gray-400 font-medium mb-1">{addr.phone}</p>
+                                                <p className="text-xs text-gray-500 leading-relaxed max-w-[250px]">{addr.address}, {addr.city}</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                                            <Button
+                                                onClick={() => { setAddressToEdit(addr); setIsAddressModalOpen(true); }}
+                                                variant="ghost"
+                                                className="p-2 h-9 w-9 rounded-xl hover:bg-orange-50 text-gray-400 hover:text-[#B5451B]"
+                                            >
+                                                <Edit2 className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                onClick={async () => {
+                                                    if (confirm("Are you sure you want to delete this address?")) {
+                                                        try {
+                                                            await deleteAddress(addr._id!).unwrap();
+                                                            toast.success("Address deleted");
+                                                        } catch (e) {
+                                                            toast.error("Failed to delete address");
+                                                        }
+                                                    }
+                                                }}
+                                                variant="ghost"
+                                                className="p-2 h-9 w-9 rounded-xl hover:bg-red-50 text-gray-400 hover:text-red-500"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        ) : (
+                            <div className="p-10 text-center">
+                                <p className="text-sm text-gray-400 font-medium">No saved addresses found.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 {/* Change Password */}
                 <button
@@ -151,7 +220,7 @@ export default function ProfileSettings() {
             <AddressModal
                 isOpen={isAddressModalOpen}
                 onClose={() => setIsAddressModalOpen(false)}
-                currentAddress={profile?.address || ""}
+                addressToEdit={addressToEdit}
             />
         </div>
     );

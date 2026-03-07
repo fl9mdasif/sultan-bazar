@@ -27,4 +27,4 @@ export const PAYMENT_STATUS = {
 export const FREE_SHIPPING_THRESHOLD = 10000;
 
 /** Flat shipping charge when below the threshold (BDT) */
-export const SHIPPING_CHARGE = 120;
+export const SHIPPING_CHARGE = 60;

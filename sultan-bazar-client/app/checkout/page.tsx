@@ -29,6 +29,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useGetSingleProductQuery } from "@/redux/api/productApi";
 import { TProduct, TVariant } from "@/types/common";
+import { AddressModal } from "@/components/dashboard/AddressModal";
 
 // ── Address Card ─────────────────────────────────────────────────────────────
 function AddressCard({
@@ -99,15 +100,8 @@ function CheckoutPageContent() {
     // console.log('checkout', user);
 
     const [selectedAddressId, setSelectedAddressId] = useState<string | null>(null);
-    const [showNewAddressForm, setShowNewAddressForm] = useState(false);
-    const [newAddress, setNewAddress] = useState<Partial<TSavedAddress>>({
-        fullName: "",
-        phone: "",
-        address: "",
-        city: "",
-        district: "",
-        label: "Home"
-    });
+    const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+    const [addressToEdit, setAddressToEdit] = useState<TSavedAddress | undefined>(undefined);
 
     useEffect(() => {
         if (addresses.length > 0) {
@@ -137,6 +131,10 @@ function CheckoutPageContent() {
         return cart?.items || [];
     }, [isDirectBuy, directBuyItem, cart?.items]);
 
+    // Shipping Constants (should match server)
+    const SHIPPING_CHARGE = 60;
+    const FREE_SHIPPING_THRESHOLD = 10000;
+
     const subtotal = useMemo(() => {
         return checkoutItems.reduce((acc, item) => {
             const product = item.product;
@@ -146,8 +144,9 @@ function CheckoutPageContent() {
         }, 0);
     }, [checkoutItems]);
 
-    const shippingCharge = subtotal > 0 ? 60 : 0;
+    const shippingCharge = subtotal > 0 && subtotal < FREE_SHIPPING_THRESHOLD ? SHIPPING_CHARGE : 0;
     const total = subtotal + shippingCharge;
+
 
     const handlePlaceOrder = async () => {
         const selectedAddress = addresses.find(a => a._id === selectedAddressId);
@@ -170,18 +169,15 @@ function CheckoutPageContent() {
                 paymentMethod: "cod", // Cash On Delivery is the only active option
                 paymentStatus: "pending",
                 items: checkoutItems.map(item => {
-                    const product = item.product;
-                    const variant = product.variants.find(v => v._id === item.variantId || v.sku === item.variantId);
                     return {
-                        productId: product._id,
+                        productId: item.product._id,
                         variantId: item.variantId,
-                        quantity: item.quantity,
-                        price: variant?.discountPrice ?? variant?.price ?? 0
+                        quantity: item.quantity
                     };
                 }),
-                subtotal,
-                shippingCharge,
-                totalAmount: total
+                // Server recalculates subtotal, shipping, and total for security
+                // but we pass our display total for reference if needed
+                note: ""
             };
 
             await placeOrder(orderData).unwrap();
@@ -198,24 +194,6 @@ function CheckoutPageContent() {
         }
     };
 
-    const handleAddNewAddress = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            await addAddress(newAddress as TSavedAddress).unwrap();
-            toast.success("Address added!");
-            setShowNewAddressForm(false);
-            setNewAddress({
-                fullName: "",
-                phone: "",
-                address: "",
-                city: "",
-                district: "",
-                label: "Home"
-            });
-        } catch (err: any) {
-            toast.error(err?.data?.message || "Failed to add address");
-        }
-    };
 
     if (cartLoading || addressesLoading || singleProductLoading) {
         return (
@@ -274,99 +252,43 @@ function CheckoutPageContent() {
                                     </div>
                                     Shipping Information
                                 </h3>
-                                {!showNewAddressForm && (
-                                    <Button
-                                        onClick={() => setShowNewAddressForm(true)}
-                                        variant="outline"
-                                        className="rounded-full border-orange-100 text-[#B5451B] hover:bg-orange-50 font-bold cursor-pointer"
-                                    >
-                                        <Plus className="w-4 h-4 mr-2" /> Add New
-                                    </Button>
-                                )}
+                                <Button
+                                    onClick={() => { setAddressToEdit(undefined); setIsAddressModalOpen(true); }}
+                                    variant="outline"
+                                    className="rounded-full border-orange-100 text-[#B5451B] hover:bg-orange-50 font-bold cursor-pointer"
+                                >
+                                    <Plus className="w-4 h-4 mr-2" /> Add New
+                                </Button>
                             </div>
 
-                            {showNewAddressForm ? (
-                                <form onSubmit={handleAddNewAddress} className="space-y-6 bg-orange-50/30 p-8 rounded-3xl border border-orange-100">
-                                    <div className="grid sm:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase tracking-widest text-gray-500">Full Name</label>
-                                            <input
-                                                required
-                                                value={newAddress.fullName}
-                                                onChange={e => setNewAddress({ ...newAddress, fullName: e.target.value })}
-                                                className="w-full bg-white border border-orange-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B5451B] transition-all"
-                                                placeholder="Recipient name"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase tracking-widest text-gray-500">Phone Number</label>
-                                            <input
-                                                required
-                                                value={newAddress.phone}
-                                                onChange={e => setNewAddress({ ...newAddress, phone: e.target.value })}
-                                                className="w-full bg-white border border-orange-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B5451B] transition-all"
-                                                placeholder="Active mobile number"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black uppercase tracking-widest text-gray-500">Detailed Address</label>
-                                        <textarea
-                                            required
-                                            value={newAddress.address}
-                                            onChange={e => setNewAddress({ ...newAddress, address: e.target.value })}
-                                            className="w-full bg-white border border-orange-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B5451B] transition-all min-h-[100px]"
-                                            placeholder="House no, Street name, Area..."
-                                        />
-                                    </div>
-                                    <div className="grid sm:grid-cols-2 gap-6">
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase tracking-widest text-gray-500">City</label>
-                                            <input
-                                                required
-                                                value={newAddress.city}
-                                                onChange={e => setNewAddress({ ...newAddress, city: e.target.value })}
-                                                className="w-full bg-white border border-orange-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B5451B] transition-all"
-                                                placeholder="City name"
-                                            />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <label className="text-xs font-black uppercase tracking-widest text-gray-500">District</label>
-                                            <input
-                                                required
-                                                value={newAddress.district}
-                                                onChange={e => setNewAddress({ ...newAddress, district: e.target.value })}
-                                                className="w-full bg-white border border-orange-100 rounded-xl px-4 py-3 focus:outline-none focus:border-[#B5451B] transition-all"
-                                                placeholder="District"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-4 pt-4">
-                                        <Button type="submit" disabled={isAddingAddress} className="bg-[#B5451B] hover:bg-[#8B3515] rounded-xl px-8 py-6 h-auto font-bold flex-1 cursor-pointer">
-                                            {isAddingAddress ? <Loader2 className="w-5 h-5 animate-spin" /> : "Save Address"}
-                                        </Button>
-                                        <Button type="button" variant="ghost" onClick={() => setShowNewAddressForm(false)} className="rounded-xl px-8 h-auto font-bold text-gray-500 cursor-pointer">Cancel</Button>
-                                    </div>
-                                </form>
-                            ) : (
-                                <div className="grid sm:grid-cols-2 gap-6">
-                                    {addresses.map(addr => (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                {addresses.map((addr: TSavedAddress) => (
+                                    <div key={addr._id} className="relative group">
                                         <AddressCard
-                                            key={addr._id}
                                             address={addr}
                                             selected={selectedAddressId === addr._id}
                                             onSelect={() => setSelectedAddressId(addr._id!)}
                                         />
-                                    ))}
-                                    {addresses.length === 0 && (
-                                        <div className="col-span-full py-12 text-center bg-orange-50/20 border-2 border-dashed border-orange-100 rounded-[2rem]">
-                                            <MapPin className="w-12 h-12 text-[#B5451B] opacity-20 mx-auto mb-4" />
-                                            <p className="font-bold text-gray-400">No saved addresses found</p>
-                                            <Button onClick={() => setShowNewAddressForm(true)} variant="link" className="text-[#B5451B] mt-2 font-bold cursor-pointer">Add your first address</Button>
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setAddressToEdit(addr);
+                                                setIsAddressModalOpen(true);
+                                            }}
+                                            className="absolute top-4 right-12 p-1.5 rounded-lg bg-white/80 backdrop-blur-sm border border-orange-100 text-[#B5451B] opacity-0 group-hover:opacity-100 transition-all hover:bg-[#B5451B] hover:text-white"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                                        </button>
+                                    </div>
+                                ))}
+                                {addresses.length === 0 && (
+                                    <div className="col-span-full py-12 text-center bg-orange-50/20 border-2 border-dashed border-orange-100 rounded-[2rem]">
+                                        <MapPin className="w-12 h-12 text-[#B5451B] opacity-20 mx-auto mb-4" />
+                                        <p className="font-bold text-gray-400">No saved addresses found</p>
+                                        <Button onClick={() => { setAddressToEdit(undefined); setIsAddressModalOpen(true); }} variant="link" className="text-[#B5451B] mt-2 font-bold cursor-pointer">Add your first address</Button>
+                                    </div>
+                                )}
+                            </div>
                         </section>
 
                         {/* 2. Payment Method */}
@@ -493,9 +415,12 @@ function CheckoutPageContent() {
                     </aside>
                 </div>
             </div>
+            <AddressModal
+                isOpen={isAddressModalOpen}
+                onClose={() => setIsAddressModalOpen(false)}
+                addressToEdit={addressToEdit}
+            />
         </div>
-
-
     );
 }
 
