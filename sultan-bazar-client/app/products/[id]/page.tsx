@@ -113,6 +113,29 @@ export default function ProductDetailPage() {
         }
     };
 
+    const handleShare = async () => {
+        const shareData = {
+            title: p.name,
+            text: `Check out this authentic ${p.name} from Sultan Bazar!`,
+            url: window.location.href,
+        };
+
+        try {
+            if (navigator.share) {
+                await navigator.share(shareData);
+                toast.success("Shared successfully!");
+            } else {
+                await navigator.clipboard.writeText(window.location.href);
+                toast.success("Link copied to clipboard!");
+            }
+        } catch (err) {
+            // Only show error if it's not a user cancellation
+            if ((err as Error).name !== 'AbortError') {
+                toast.error("Could not share product");
+            }
+        }
+    };
+
     const gallery = p.gallery?.length ? p.gallery : [p.thumbnail];
 
     return (
@@ -328,7 +351,10 @@ export default function ProductDetailPage() {
                                 <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest flex items-center gap-2">
                                     <Tag className="w-4 h-4" /> SKU: <span className="text-gray-900">{selectedVariant.sku}</span>
                                 </p>
-                                <button className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest hover:text-[#B5451B] transition-colors ml-auto">
+                                <button
+                                    onClick={handleShare}
+                                    className="flex items-center gap-2 text-[10px] text-gray-400 font-bold uppercase tracking-widest hover:text-[#B5451B] transition-colors ml-auto"
+                                >
                                     <Share2 className="w-4 h-4" /> Share Product
                                 </button>
                             </div>

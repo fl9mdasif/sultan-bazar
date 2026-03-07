@@ -20,9 +20,9 @@ export default function RootLayout({
       <body className="antialiased">
         <StoreProvider>
           <Navbar />
-          <Toaster position="top-right" richColors />
           <main>{children}</main>
           <Footer />
+          <Toaster position="bottom-right" richColors />
         </StoreProvider>
       </body>
     </html>
