@@ -2,76 +2,13 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Heart, Star, ShoppingCart } from "lucide-react";
+import Image from "next/image";
+import { Heart, Star, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-
-type Variant = { label: string; price: number; originalPrice?: number };
-
-type Product = {
-    id: number;
-    name: string;
-    image: string;
-    emoji: string;
-    rating: number;
-    reviews: number;
-    inStock: boolean;
-    variants: Variant[];
-    tag?: string;
-};
-
-const products: Product[] = [
-    {
-        id: 1, name: "Sultan Mustard Oil", emoji: "🫒", image: "/hero-spices.png",
-        rating: 4.8, reviews: 234, inStock: true, tag: "Best Seller",
-        variants: [
-            { label: "250ml", price: 85, originalPrice: 100 },
-            { label: "500ml", price: 160, originalPrice: 190 },
-            { label: "1L", price: 300, originalPrice: 360 },
-        ],
-    },
-    {
-        id: 2, name: "Sultan Biriyani Masala", emoji: "🥘", image: "/hero-spices.png",
-        rating: 4.9, reviews: 189, inStock: true, tag: "Popular",
-        variants: [{ label: "75g", price: 65, originalPrice: 80 }],
-    },
-    {
-        id: 3, name: "Sultan Premium Beef Masala", emoji: "🥩", image: "/hero-spices.png",
-        rating: 4.7, reviews: 142, inStock: true,
-        variants: [{ label: "50g", price: 55, originalPrice: 70 }],
-    },
-    {
-        id: 4, name: "Sultan Premium Chicken Masala", emoji: "🍗", image: "/hero-spices.png",
-        rating: 4.7, reviews: 118, inStock: true,
-        variants: [{ label: "50g", price: 55, originalPrice: 70 }],
-    },
-    {
-        id: 5, name: "Isphahani Mirzapore Tea", emoji: "🍵", image: "/hero-spices.png",
-        rating: 4.6, reviews: 312, inStock: true, tag: "Premium",
-        variants: [
-            { label: "200g", price: 185, originalPrice: 210 },
-            { label: "400g", price: 360, originalPrice: 420 },
-        ],
-    },
-    {
-        id: 6, name: "Isobgoli — Psyllium Husk", emoji: "🌿", image: "/hero-spices.png",
-        rating: 4.5, reviews: 76, inStock: true, tag: "Natural",
-        variants: [{ label: "200g", price: 120, originalPrice: 150 }],
-    },
-    {
-        id: 7, name: "Chia Seeds", emoji: "🫘", image: "/hero-spices.png",
-        rating: 4.6, reviews: 93, inStock: true,
-        variants: [{ label: "100g", price: 95, originalPrice: 120 }],
-    },
-    {
-        id: 8, name: "Esha Aromatic Rice", emoji: "🌾", image: "/hero-spices.png",
-        rating: 4.8, reviews: 201, inStock: true, tag: "Export Quality",
-        variants: [
-            { label: "1kg", price: 110, originalPrice: 130 },
-            { label: "5kg", price: 520, originalPrice: 620 },
-        ],
-    },
-];
+import { useGetAllProductsQuery } from "@/redux/api/productApi";
+import { TProduct, TVariant } from "@/types/common";
+import { useAddToCartMutation } from "@/redux/api/cartApi";
+import { toast } from "sonner";
 
 function Stars({ rating }: { rating: number }) {
     return (
@@ -88,133 +25,209 @@ function Stars({ rating }: { rating: number }) {
     );
 }
 
-function ProductCard({ product }: { product: Product }) {
-    const [selectedVariant, setSelectedVariant] = useState(0);
+function ProductCard({ product }: { product: TProduct }) {
+    const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
     const [wishlisted, setWishlisted] = useState(false);
+    const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
 
-    const variant = product.variants[selectedVariant];
-    const discount = variant.originalPrice
-        ? Math.round(((variant.originalPrice - variant.price) / variant.originalPrice) * 100)
+    const variant = product.variants[selectedVariantIndex];
+    if (!variant) return null;
+
+    const price = variant.discountPrice ?? variant.price;
+    const originalPrice = variant.price;
+    const hasDiscount = !!variant.discountPrice;
+    const discount = hasDiscount
+        ? Math.round(((originalPrice - (variant.discountPrice ?? 0)) / originalPrice) * 100)
         : 0;
 
+    const inStock = (variant.isAvailable ?? true) && variant.stock > 0;
+
+    const handleAddToCart = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            await addToCart({
+                productId: product._id,
+                variantId: variant._id,
+                quantity: 1
+            }).unwrap();
+            toast.success(`${product.name} added to cart!`);
+        } catch (err: any) {
+            toast.error(err?.data?.message || "Failed to add to cart");
+        }
+    };
+
     return (
-        <div
-            className="hover-lift bg-white rounded-2xl overflow-hidden border flex flex-col"
-            style={{ borderColor: "#F0E6D3" }}
-        >
-            {/* Image */}
-            <div className="relative aspect-square bg-gradient-to-br from-amber-50 to-orange-50 overflow-hidden">
-                <div className="w-full h-full flex items-center justify-center text-7xl">
-                    {product.emoji}
-                </div>
+        <Link href={`/products/${product._id}`}>
+            <div
+                className="hover-lift bg-white rounded-2xl overflow-hidden border flex flex-col h-full cursor-pointer group"
+                style={{ borderColor: "#F0E6D3" }}
+            >
+                {/* Image */}
+                <div className="relative aspect-square bg-gradient-to-br from-amber-50 to-orange-50 overflow-hidden">
+                    {product.thumbnail ? (
+                        <Image
+                            src={product.thumbnail}
+                            alt={product.name}
+                            fill
+                            className="object-cover transition-transform group-hover:scale-105"
+                        />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center text-4xl bg-gray-100 text-gray-400">
+                            📦
+                        </div>
+                    )}
 
-                {/* Wishlist button */}
-                <button
-                    onClick={() => setWishlisted(!wishlisted)}
-                    className="absolute top-3 right-3 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center transition-transform hover:scale-110"
-                >
-                    <Heart
-                        className="w-4 h-4"
-                        fill={wishlisted ? "#B5451B" : "none"}
-                        stroke={wishlisted ? "#B5451B" : "#9ca3af"}
-                    />
-                </button>
-
-                {/* Tag */}
-                {product.tag && (
-                    <span
-                        className="absolute top-3 left-3 text-xs font-bold px-2 py-1 rounded-full text-white"
-                        style={{ background: "#B5451B" }}
+                    {/* Wishlist button */}
+                    <button
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWishlisted(!wishlisted); }}
+                        className="absolute top-3 right-3 z-10 w-8 h-8 bg-white rounded-full shadow-md flex items-center justify-center transition-transform hover:scale-110"
                     >
-                        {product.tag}
-                    </span>
-                )}
+                        <Heart
+                            className="w-4 h-4"
+                            fill={wishlisted ? "#B5451B" : "none"}
+                            stroke={wishlisted ? "#B5451B" : "#9ca3af"}
+                        />
+                    </button>
 
-                {/* Discount badge */}
-                {discount > 0 && (
-                    <span className="absolute bottom-3 left-3 text-xs font-bold px-2 py-1 rounded-full bg-green-500 text-white">
-                        -{discount}%
-                    </span>
-                )}
-            </div>
+                    {/* Tag */}
+                    {product.isFeatured && (
+                        <span
+                            className="absolute top-3 left-3 z-10 text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                            style={{ background: "#B5451B" }}
+                        >
+                            Featured
+                        </span>
+                    )}
 
-            {/* Content */}
-            <div className="p-4 flex flex-col flex-1">
-                <h3 className="font-bold text-gray-800 text-sm leading-tight mb-1">
-                    {product.name}
-                </h3>
-
-                {/* Rating */}
-                <div className="flex items-center gap-1.5 mb-2">
-                    <Stars rating={product.rating} />
-                    <span className="text-xs text-gray-400">({product.reviews})</span>
+                    {/* Discount badge */}
+                    {discount > 0 && (
+                        <span className="absolute bottom-3 left-3 z-10 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white">
+                            -{discount}%
+                        </span>
+                    )}
                 </div>
 
-                {/* Variants */}
-                {product.variants.length > 1 && (
-                    <div className="flex gap-1.5 flex-wrap mb-3">
-                        {product.variants.map((v, i) => (
-                            <button
-                                key={v.label}
-                                onClick={() => setSelectedVariant(i)}
-                                className="text-xs px-2.5 py-1 rounded-full border font-medium transition-all"
+                {/* Content */}
+                <div className="p-4 flex flex-col flex-1">
+                    <h3 className="font-bold text-gray-800 text-sm leading-tight mb-1 hover:text-[#B5451B] transition-colors line-clamp-2 min-h-[2.5rem]">
+                        {product.name}
+                    </h3>
+
+                    {/* Rating */}
+                    <div className="flex items-center gap-1.5 mb-3">
+                        <Stars rating={product.rating ?? 0} />
+                        <span className="text-xs text-gray-400">({product.reviewCount ?? 0})</span>
+                    </div>
+
+                    {/* Variants */}
+                    {product.variants.length > 1 && (
+                        <div className="flex gap-1.5 flex-wrap mb-4">
+                            {product.variants.map((v, i) => (
+                                <button
+                                    key={v.sku || i}
+                                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setSelectedVariantIndex(i); }}
+                                    className="text-[10px] px-2 py-0.5 rounded-full border font-medium transition-all"
+                                    style={
+                                        i === selectedVariantIndex
+                                            ? { background: "#B5451B", color: "white", borderColor: "#B5451B" }
+                                            : { borderColor: "#E0C9B0", color: "#666" }
+                                    }
+                                >
+                                    {v.name}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    <div className="mt-auto space-y-3">
+                        {/* Price */}
+                        <div className="flex items-center gap-2">
+                            <span className="text-lg font-bold" style={{ color: "#B5451B" }}>
+                                ৳{price}
+                            </span>
+                            {hasDiscount && (
+                                <span className="text-sm text-gray-400 line-through">
+                                    ৳{originalPrice}
+                                </span>
+                            )}
+                            {/* Stock */}
+                            <span
+                                className="ml-auto text-[10px] font-medium px-2 py-0.5 rounded-full"
                                 style={
-                                    i === selectedVariant
-                                        ? { background: "#B5451B", color: "white", borderColor: "#B5451B" }
-                                        : { borderColor: "#E0C9B0", color: "#666" }
+                                    inStock
+                                        ? { background: "#dcfce7", color: "#16a34a" }
+                                        : { background: "#f3f4f6", color: "#9ca3af" }
                                 }
                             >
-                                {v.label}
-                            </button>
-                        ))}
-                    </div>
-                )}
-
-                <div className="mt-auto space-y-3">
-                    {/* Price */}
-                    <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold" style={{ color: "#B5451B" }}>
-                            ৳{variant.price}
-                        </span>
-                        {variant.originalPrice && (
-                            <span className="text-sm text-gray-400 line-through">
-                                ৳{variant.originalPrice}
+                                {inStock ? "In Stock" : "Out of Stock"}
                             </span>
-                        )}
-                        {/* Stock */}
-                        <span
-                            className="ml-auto text-xs font-medium px-2 py-0.5 rounded-full"
-                            style={
-                                product.inStock
-                                    ? { background: "#dcfce7", color: "#16a34a" }
-                                    : { background: "#f3f4f6", color: "#9ca3af" }
-                            }
-                        >
-                            {product.inStock ? "In Stock" : "Out of Stock"}
-                        </span>
-                    </div>
+                        </div>
 
-                    {/* Add to cart */}
-                    <Button
-                        className="w-full text-white font-semibold text-sm rounded-full py-2"
-                        style={{ background: "#B5451B" }}
-                        disabled={!product.inStock}
-                    >
-                        <ShoppingCart className="w-4 h-4 mr-2" />
-                        Add to Cart
-                    </Button>
+                        {/* Add to cart */}
+                        <Button
+                            onClick={handleAddToCart}
+                            className="w-full cursor-pointer text-white font-semibold text-xs rounded-full py-1.5 h-9"
+                            style={{ background: "#B5451B" }}
+                            disabled={!inStock || isAdding}
+                        >
+                            {isAdding ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin mr-2" />
+                            ) : (
+                                <ShoppingCart className="w-3.5 h-3.5 mr-2" />
+                            )}
+                            {isAdding ? "Adding..." : "Add to Cart"}
+                        </Button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }
 
 export default function FeaturedProducts() {
+    const { data, isLoading, isError } = useGetAllProductsQuery({ isFeatured: true, limit: 8 });
+
+    // console.log('fp', data);
+    const products = data?.data || [];
+
+    if (isLoading) {
+        return (
+            <section className="py-12 lg:py-20 bg-[#FDF6EC]/50">
+                <div className="container mx-auto px-4 text-center">
+                    <div className="flex flex-col items-center justify-center gap-4 py-20 bg-white/50 rounded-3xl border border-orange-100 shadow-sm">
+                        <Loader2 className="w-10 h-10 animate-spin text-[#B5451B]" />
+                        <p className="text-gray-500 font-medium">Discovering sultan treasures...</p>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
+    if (isError) {
+        return (
+            <section className="py-12 lg:py-20 bg-red-50/30">
+                <div className="container mx-auto px-4 text-center">
+                    <div className="py-12 bg-white rounded-3xl border border-red-100 shadow-sm max-w-md mx-auto">
+                        <p className="text-red-500 font-medium">Oops! Failed to load products.</p>
+                        <Button
+                            variant="link"
+                            className="mt-2 text-[#B5451B]"
+                            onClick={() => window.location.reload()}
+                        >
+                            Try refreshing
+                        </Button>
+                    </div>
+                </div>
+            </section>
+        );
+    }
+
     return (
         <>
             {/* ── Products Section with bg image ── */}
             <section
-                className="py-8 lg:py-12 relative"
+                className="py-12 lg:py-20 relative overflow-hidden"
                 style={{
                     backgroundImage: "url('/images/product-section-bg-img_1.jpg')",
                     backgroundSize: "cover",
@@ -223,34 +236,43 @@ export default function FeaturedProducts() {
                 }}
             >
                 {/* Light overlay so cards stay readable */}
-                <div className="absolute inset-0" style={{ background: "rgba(253,246,236,0.93)" }} />
+                <div className="absolute inset-0" style={{ background: "rgba(253,246,236,0.92)" }} />
 
                 <div className="relative z-10 container mx-auto px-4 lg:px-8">
                     {/* Section header */}
-                    <div className="text-center mb-10">
-                        <p className="text-sm font-semibold uppercase tracking-widest mb-2" style={{ color: "#D4860A" }}>
-                            Top Picks
+                    <div className="text-center mb-12">
+                        <p className="text-sm font-bold uppercase tracking-[0.2em] mb-3" style={{ color: "#D4860A" }}>
+                            Curated For You
                         </p>
-                        <h2 className="text-3xl lg:text-4xl font-bold text-gray-900">
+                        <h2 className="text-3xl lg:text-5xl font-black text-gray-900 tracking-tight">
                             Our <span style={{ color: "#B5451B" }}>Best Sellers</span>
                         </h2>
-                        <p className="text-gray-600 mt-2">Loved by thousands of Bangladeshi families</p>
+                        <div className="h-1.5 w-24 bg-[#B5451B] mx-auto mt-4 rounded-full" />
+                        <p className="text-gray-600 mt-6 max-w-xl mx-auto text-sm lg:text-base leading-relaxed">
+                            Experience the authentic taste of Bangladesh with our premium selection of spices, oils, and essentials.
+                        </p>
                     </div>
 
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-5">
-                        {products.map((p) => (
-                            <ProductCard key={p.id} product={p} />
-                        ))}
-                    </div>
+                    {products.length === 0 ? (
+                        <div className="text-center py-20 bg-white/40 rounded-3xl border border-orange-100/50 backdrop-blur-sm">
+                            <p className="text-gray-500 italic">No featured products available at the moment.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-8">
+                            {products.map((p: TProduct) => (
+                                <ProductCard key={p._id} product={p} />
+                            ))}
+                        </div>
+                    )}
 
-                    <div className="text-center mt-10">
+                    <div className="text-center mt-14">
                         <Link href="/products">
                             <Button
                                 size="lg"
-                                className="rounded-full px-10 font-semibold text-white"
-                                style={{ background: "#B5451B" }}
+                                className="rounded-full px-12 font-bold text-white shadow-xl hover:shadow-[#B5451B]/20 transition-all hover:-translate-y-1 py-6 h-auto"
+                                style={{ background: "linear-gradient(135deg, #B5451B, #D4860A)" }}
                             >
-                                View All Products →
+                                Explore Entire Collection →
                             </Button>
                         </Link>
                     </div>
@@ -259,7 +281,7 @@ export default function FeaturedProducts() {
 
             {/* ── Parallax Banner ── */}
             <div
-                className="relative py-14 lg:py-20 text-center overflow-hidden"
+                className="relative py-20 lg:py-32 text-center"
                 style={{
                     backgroundImage: "url('/images/parallax-full-width.jpg')",
                     backgroundSize: "cover",
@@ -267,25 +289,25 @@ export default function FeaturedProducts() {
                     backgroundAttachment: "fixed",
                 }}
             >
-                <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.58)" }} />
+                <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.6)" }} />
                 <div className="relative z-10 container mx-auto px-4">
-                    <p className="text-xs font-semibold uppercase tracking-[0.3em] mb-3" style={{ color: "#D4860A" }}>Limited Time Offer</p>
-                    <h2 className="text-3xl lg:text-5xl font-bold text-white mb-3 drop-shadow-lg">
-                        Get <span style={{ color: "#F5D078" }}>20% OFF</span> Sitewide
+                    <p className="text-sm font-bold uppercase tracking-[0.4em] mb-4" style={{ color: "#D4860A" }}>Exclusive Celebration</p>
+                    <h2 className="text-4xl lg:text-7xl font-black text-white mb-6 drop-shadow-2xl">
+                        SAVE <span className="text-[#F5D078]">20%</span> TODAY
                     </h2>
-                    <div className="flex items-center justify-center gap-3 mb-6">
-                        <div className="h-px w-16" style={{ background: "#D4860A" }} />
-                        <span className="text-white/80 text-sm tracking-widest uppercase">Use Coupon</span>
-                        <div className="h-px w-16" style={{ background: "#D4860A" }} />
+                    <div className="flex items-center justify-center gap-4 mb-8">
+                        <div className="h-0.5 w-12 bg-[#D4860A]/50" />
+                        <span className="text-white/70 text-sm font-semibold tracking-widest uppercase">Use Limited Voucher</span>
+                        <div className="h-0.5 w-12 bg-[#D4860A]/50" />
                     </div>
-                    <div className="inline-block bg-white/15 backdrop-blur-sm border border-white/30 rounded-2xl px-8 py-3 mb-6">
-                        <span className="text-2xl font-bold tracking-[0.25em] text-white">SULTAN20</span>
+                    <div className="inline-block bg-white/10 backdrop-blur-md border-2 border-white/20 rounded-3xl px-12 py-4 mb-10 shadow-2xl">
+                        <span className="text-3xl lg:text-4xl font-black tracking-[0.2em] text-white">SULTAN20</span>
                     </div>
                     <div className="block">
                         <Link href="/products"
-                            className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-bold text-sm hover:scale-105 transition-transform"
+                            className="inline-flex items-center gap-3 px-12 py-4 rounded-full font-black text-sm lg:text-base hover:scale-105 active:scale-95 transition-all shadow-2xl"
                             style={{ background: "linear-gradient(135deg, #B5451B, #D4860A)", color: "white" }}>
-                            Shop Now →
+                            Grab the Deal Now →
                         </Link>
                     </div>
                 </div>

@@ -37,6 +37,7 @@ export interface TCategory {
   name: string;
   slug: string;
   description?: string;
+  thumbnail?: string;
   isActive: boolean;
   order: number;
 }
@@ -59,7 +60,7 @@ export interface TProduct {
   name: string;
   slug: string;
   description: string;
-  category: string;
+  category: string | TCategory;
   tags?: string[];
   thumbnail: string;
   gallery?: string[];
@@ -134,6 +135,22 @@ export interface TOrder {
   cancelledAt?: string;
   cancelReason?: string;
   note?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ─── Cart Types ───────────────────────────────────────────────────────────────
+
+export interface TCartItem {
+  product: TProduct;
+  variantId: string;
+  quantity: number;
+}
+
+export interface TCart {
+  _id: string;
+  user: string;
+  items: TCartItem[];
   createdAt?: string;
   updatedAt?: string;
 }

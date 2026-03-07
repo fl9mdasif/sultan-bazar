@@ -1,49 +1,28 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp, ShoppingCart, Heart, Star, Filter } from "lucide-react";
+import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp, ShoppingCart, Heart, Star, Filter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { useGetAllProductsQuery } from "@/redux/api/productApi";
+import { useGetAllCategoriesQuery } from "@/redux/api/categoryApi";
+import { TProduct, TCategory } from "@/types/common";
+import Link from "next/link";
+import Image from "next/image";
+import { useAddToCartMutation } from "@/redux/api/cartApi";
+import { toast } from "sonner";
 
-// ── All products data ────────────────────────────────────────────────────────
-const ALL_PRODUCTS = [
-    { id: 1, name: "Sultan Mustard Oil 250ml", category: "Oils", price: 85, originalPrice: 100, rating: 4.8, reviews: 234, inStock: true, emoji: "🫒", tag: "Best Seller" },
-    { id: 2, name: "Sultan Mustard Oil 500ml", category: "Oils", price: 160, originalPrice: 190, rating: 4.8, reviews: 198, inStock: true, emoji: "🫒", tag: "Best Seller" },
-    { id: 3, name: "Sultan Mustard Oil 1L", category: "Oils", price: 300, originalPrice: 360, rating: 4.8, reviews: 156, inStock: true, emoji: "🫒" },
-    { id: 4, name: "Sultan Biriyani Masala 75g", category: "Masala Mixes", price: 65, originalPrice: 80, rating: 4.9, reviews: 189, inStock: true, emoji: "🥘", tag: "Popular" },
-    { id: 5, name: "Sultan Beef Masala 50g", category: "Masala Mixes", price: 55, originalPrice: 70, rating: 4.7, reviews: 142, inStock: true, emoji: "🥩" },
-    { id: 6, name: "Sultan Chicken Masala 50g", category: "Masala Mixes", price: 55, originalPrice: 70, rating: 4.7, reviews: 118, inStock: true, emoji: "🍗" },
-    { id: 7, name: "Sultan Haleem Mix 100g", category: "Masala Mixes", price: 75, originalPrice: 90, rating: 4.6, reviews: 87, inStock: true, emoji: "🍲" },
-    { id: 8, name: "Sultan Kala Bhuna Masala 70g", category: "Masala Mixes", price: 60, originalPrice: 75, rating: 4.5, reviews: 63, inStock: false, emoji: "🌑" },
-    { id: 9, name: "Isphahani Tea 200g", category: "Tea", price: 185, originalPrice: 210, rating: 4.6, reviews: 312, inStock: true, emoji: "🍵", tag: "Premium" },
-    { id: 10, name: "Isphahani Tea 400g", category: "Tea", price: 360, originalPrice: 420, rating: 4.6, reviews: 238, inStock: true, emoji: "🍵", tag: "Premium" },
-    { id: 11, name: "Lipton Yellow Label 200g", category: "Tea", price: 160, originalPrice: 180, rating: 4.4, reviews: 94, inStock: true, emoji: "🍃" },
-    { id: 12, name: "Turmeric Powder 200g", category: "Spice Powders", price: 45, originalPrice: 55, rating: 4.5, reviews: 201, inStock: true, emoji: "🟡" },
-    { id: 13, name: "Chili Powder 200g", category: "Spice Powders", price: 50, originalPrice: 60, rating: 4.6, reviews: 178, inStock: true, emoji: "🌶️" },
-    { id: 14, name: "Coriander Powder 200g", category: "Spice Powders", price: 40, originalPrice: 50, rating: 4.4, reviews: 132, inStock: true, emoji: "🫛" },
-    { id: 15, name: "Cumin Powder 150g", category: "Spice Powders", price: 55, originalPrice: 65, rating: 4.5, reviews: 109, inStock: true, emoji: "🟤" },
-    { id: 16, name: "Isobgoli Psyllium Husk 200g", category: "Pulses & Seeds", price: 120, originalPrice: 150, rating: 4.5, reviews: 76, inStock: true, emoji: "🌿", tag: "Natural" },
-    { id: 17, name: "Chia Seeds 100g", category: "Pulses & Seeds", price: 95, originalPrice: 120, rating: 4.6, reviews: 93, inStock: true, emoji: "🫘" },
-    { id: 18, name: "Basil Seeds / Takma 100g", category: "Pulses & Seeds", price: 80, originalPrice: 100, rating: 4.4, reviews: 58, inStock: true, emoji: "💧" },
-    { id: 19, name: "Esha Aromatic Rice 1kg", category: "Rice & Grains", price: 110, originalPrice: 130, rating: 4.8, reviews: 201, inStock: true, emoji: "🌾", tag: "Export" },
-    { id: 20, name: "Esha Aromatic Rice 5kg", category: "Rice & Grains", price: 520, originalPrice: 620, rating: 4.8, reviews: 134, inStock: true, emoji: "🌾" },
-    { id: 21, name: "Puffed Rice 500g", category: "Rice & Grains", price: 40, originalPrice: 50, rating: 4.2, reviews: 42, inStock: true, emoji: "☁️" },
-    { id: 22, name: "Chili Whole 100g", category: "Whole Spices", price: 35, originalPrice: 45, rating: 4.3, reviews: 67, inStock: true, emoji: "🌶️" },
-    { id: 23, name: "Tejpata Bay Leaf 50g", category: "Whole Spices", price: 30, originalPrice: 40, rating: 4.2, reviews: 48, inStock: false, emoji: "🍃" },
-    { id: 24, name: "Semai Vermicelli 200g", category: "Dry Foods", price: 35, originalPrice: 45, rating: 4.1, reviews: 38, inStock: true, emoji: "🍜" },
-];
-
-const CATEGORIES = ["All", "Oils", "Masala Mixes", "Tea", "Spice Powders", "Pulses & Seeds", "Rice & Grains", "Whole Spices", "Dry Foods"];
 const SORT_OPTIONS = [
-    { label: "Featured", value: "featured" },
-    { label: "Price: Low to High", value: "price_asc" },
-    { label: "Price: High to Low", value: "price_desc" },
-    { label: "Best Rating", value: "rating" },
-    { label: "Most Reviews", value: "reviews" },
+    { label: "Newest", value: "-createdAt" },
+    { label: "Price: Low to High", value: "variants.price" },
+    { label: "Price: High to Low", value: "-variants.price" },
+    { label: "Best Rating", value: "-rating" },
+    { label: "Most Reviews", value: "-reviewCount" },
 ];
-const ITEMS_PER_PAGE = 8;
+
+const ITEMS_PER_PAGE = 12;
 
 function Stars({ rating }: { rating: number }) {
     return (
@@ -58,63 +37,110 @@ function Stars({ rating }: { rating: number }) {
 }
 
 // ── Single product card ───────────────────────────────────────────────────────
-function ProductCard({ p }: { p: (typeof ALL_PRODUCTS)[0] }) {
+function ProductCard({ p }: { p: TProduct }) {
     const [wished, setWished] = useState(false);
-    const discount = p.originalPrice
-        ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100)
+    const [addToCart, { isLoading: isAdding }] = useAddToCartMutation();
+
+    const variant = p.variants?.[0];
+    if (!variant) return null;
+
+    const price = variant.discountPrice ?? variant.price;
+    const originalPrice = variant.price;
+    const hasDiscount = !!variant.discountPrice;
+    const discount = hasDiscount
+        ? Math.round(((originalPrice - (variant.discountPrice ?? 0)) / originalPrice) * 100)
         : 0;
 
-    return (
-        <div className="hover-lift bg-white rounded-2xl overflow-hidden border flex flex-col group"
-            style={{ border: "1.5px solid #F0E6D3" }}>
-            {/* Image */}
-            <div className="relative aspect-square bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center overflow-hidden">
-                <span className="text-6xl md:text-7xl transition-transform duration-300 group-hover:scale-110">
-                    {p.emoji}
-                </span>
-                {/* Wishlist */}
-                <button onClick={() => setWished(!wished)}
-                    className="absolute top-2 right-2 w-7 h-7 bg-white rounded-full shadow flex items-center justify-center hover:scale-110 transition-transform">
-                    <Heart className="w-3.5 h-3.5" fill={wished ? "#B5451B" : "none"} stroke={wished ? "#B5451B" : "#9ca3af"} />
-                </button>
-                {p.tag && (
-                    <span className="absolute top-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-                        style={{ background: "#B5451B" }}>{p.tag}</span>
-                )}
-                {discount > 0 && (
-                    <span className="absolute bottom-2 left-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white">
-                        -{discount}%
-                    </span>
-                )}
-                {!p.inStock && (
-                    <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
-                        <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Out of Stock</span>
-                    </div>
-                )}
-            </div>
+    const inStock = (variant.isAvailable ?? true) && variant.stock > 0;
 
-            {/* Info */}
-            <div className="p-3 flex flex-col flex-1">
-                <p className="font-semibold text-gray-800 text-sm leading-tight mb-1 line-clamp-2">{p.name}</p>
-                <div className="flex items-center gap-1.5 mb-2">
-                    <Stars rating={p.rating} />
-                    <span className="text-[11px] text-gray-400">({p.reviews})</span>
+    const handleAddToCart = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        try {
+            await addToCart({
+                productId: p._id,
+                variantId: variant._id,
+                quantity: 1
+            }).unwrap();
+            toast.success(`${p.name} added to cart!`);
+        } catch (err: any) {
+            toast.error(err?.data?.message || "Failed to add to cart");
+        }
+    };
+
+    return (
+        <Link href={`/products/${p._id}`}>
+            <div className="hover-lift bg-white rounded-2xl overflow-hidden border flex flex-col group h-full cursor-pointer"
+                style={{ border: "1.5px solid #F0E6D3" }}>
+                {/* Image */}
+                <div className="relative aspect-square bg-gradient-to-br from-amber-50 to-orange-50 flex items-center justify-center overflow-hidden">
+                    {p.thumbnail ? (
+                        <Image
+                            src={p.thumbnail}
+                            alt={p.name}
+                            fill
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
+                        />
+                    ) : (
+                        <span className="text-6xl md:text-7xl transition-transform duration-300 group-hover:scale-110">
+                            📦
+                        </span>
+                    )}
+
+                    {/* Wishlist */}
+                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setWished(!wished); }}
+                        className="absolute top-2 right-2 z-10 w-7 h-7 bg-white rounded-full shadow flex items-center justify-center hover:scale-110 transition-transform">
+                        <Heart className="w-3.5 h-3.5" fill={wished ? "#B5451B" : "none"} stroke={wished ? "#B5451B" : "#9ca3af"} />
+                    </button>
+                    {p.isFeatured && (
+                        <span className="absolute top-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
+                            style={{ background: "#B5451B" }}>Featured</span>
+                    )}
+                    {discount > 0 && (
+                        <span className="absolute bottom-2 left-2 z-10 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500 text-white">
+                            -{discount}%
+                        </span>
+                    )}
+                    {!inStock && (
+                        <div className="absolute inset-0 z-20 bg-white/70 flex items-center justify-center">
+                            <span className="text-xs font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-full">Out of Stock</span>
+                        </div>
+                    )}
                 </div>
-                <div className="mt-auto">
+
+                {/* Info */}
+                <div className="p-3 flex flex-col flex-1">
+                    <p className="font-semibold text-gray-800 text-sm leading-tight mb-1 line-clamp-2 hover:text-[#B5451B] transition-colors">
+                        {p.name}
+                    </p>
                     <div className="flex items-center gap-1.5 mb-2">
-                        <span className="font-bold text-base" style={{ color: "#B5451B" }}>৳{p.price}</span>
-                        {p.originalPrice && (
-                            <span className="text-xs text-gray-400 line-through">৳{p.originalPrice}</span>
-                        )}
+                        <Stars rating={p.rating ?? 0} />
+                        <span className="text-[11px] text-gray-400">({p.reviewCount ?? 0})</span>
                     </div>
-                    <Button className="w-full text-white text-xs font-semibold rounded-full py-1.5 h-auto"
-                        style={{ background: "#B5451B" }} disabled={!p.inStock}>
-                        <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
-                        Add to Cart
-                    </Button>
+                    <div className="mt-auto">
+                        <div className="flex items-center gap-1.5 mb-2">
+                            <span className="font-bold text-base" style={{ color: "#B5451B" }}>৳{price}</span>
+                            {hasDiscount && (
+                                <span className="text-xs text-gray-400 line-through">৳{originalPrice}</span>
+                            )}
+                        </div>
+                        <Button
+                            onClick={handleAddToCart}
+                            className="w-full cursor-pointer text-white text-xs font-semibold rounded-full py-1.5 h-auto transition-all hover:opacity-90 active:scale-95"
+                            style={{ background: "#B5451B" }}
+                            disabled={!inStock || isAdding}
+                        >
+                            {isAdding ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            ) : (
+                                <ShoppingCart className="w-3.5 h-3.5 mr-1.5" />
+                            )}
+                            {isAdding ? "Adding..." : "Add to Cart"}
+                        </Button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Link>
     );
 }
 
@@ -124,12 +150,14 @@ function FilterPanel({
     selectedCategory, setSelectedCategory,
     priceRange, setPriceRange,
     inStockOnly, setInStockOnly,
+    categories,
     onClose,
 }: {
     search: string; setSearch: (v: string) => void;
     selectedCategory: string; setSelectedCategory: (v: string) => void;
     priceRange: number[]; setPriceRange: (v: number[]) => void;
     inStockOnly: boolean; setInStockOnly: (v: boolean) => void;
+    categories: TCategory[];
     onClose?: () => void;
 }) {
     const [catOpen, setCatOpen] = useState(true);
@@ -138,7 +166,7 @@ function FilterPanel({
     const clearAll = () => {
         setSearch("");
         setSelectedCategory("All");
-        setPriceRange([0, 700]);
+        setPriceRange([0, 1000]);
         setInStockOnly(false);
     };
 
@@ -188,22 +216,27 @@ function FilterPanel({
                 </button>
                 {catOpen && (
                     <div className="space-y-1">
-                        {CATEGORIES.map((cat) => (
+                        <button
+                            onClick={() => { setSelectedCategory("All"); onClose?.(); }}
+                            className={`w-full text-left text-sm px-3 py-1.5 rounded-lg transition-all ${selectedCategory === "All"
+                                ? "font-semibold text-white"
+                                : "text-gray-600 hover:bg-orange-50 hover:text-[#B5451B]"
+                                }`}
+                            style={selectedCategory === "All" ? { background: "#B5451B" } : {}}
+                        >
+                            All Categories
+                        </button>
+                        {categories.map((cat) => (
                             <button
-                                key={cat}
-                                onClick={() => { setSelectedCategory(cat); onClose?.(); }}
-                                className={`w-full text-left text-sm px-3 py-1.5 rounded-lg transition-all ${selectedCategory === cat
+                                key={cat._id}
+                                onClick={() => { setSelectedCategory(cat._id); onClose?.(); }}
+                                className={`w-full text-left text-sm px-3 py-1.5 rounded-lg transition-all ${selectedCategory === cat._id
                                     ? "font-semibold text-white"
                                     : "text-gray-600 hover:bg-orange-50 hover:text-[#B5451B]"
                                     }`}
-                                style={selectedCategory === cat ? { background: "#B5451B" } : {}}
+                                style={selectedCategory === cat._id ? { background: "#B5451B" } : {}}
                             >
-                                {cat}
-                                <span className="float-right text-xs opacity-60">
-                                    {cat === "All"
-                                        ? ALL_PRODUCTS.length
-                                        : ALL_PRODUCTS.filter((p) => p.category === cat).length}
-                                </span>
+                                {cat.name}
                             </button>
                         ))}
                     </div>
@@ -224,7 +257,7 @@ function FilterPanel({
                 {priceOpen && (
                     <div>
                         <Slider
-                            min={0} max={700} step={10}
+                            min={0} max={1000} step={10}
                             value={priceRange}
                             onValueChange={setPriceRange}
                             className="mb-3"
@@ -258,33 +291,34 @@ function FilterPanel({
 export default function ProductsPage() {
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
-    const [priceRange, setPriceRange] = useState([0, 700]);
+    const [priceRange, setPriceRange] = useState([0, 1000]);
     const [inStockOnly, setInStockOnly] = useState(false);
-    const [sort, setSort] = useState("featured");
+    const [sort, setSort] = useState("-createdAt");
     const [page, setPage] = useState(1);
 
-    // Apply filters + sort
-    const filtered = useMemo(() => {
-        let list = [...ALL_PRODUCTS];
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            list = list.filter((p) => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
-        }
-        if (selectedCategory !== "All") list = list.filter((p) => p.category === selectedCategory);
-        list = list.filter((p) => p.price >= priceRange[0] && p.price <= priceRange[1]);
-        if (inStockOnly) list = list.filter((p) => p.inStock);
-        if (sort === "price_asc") list.sort((a, b) => a.price - b.price);
-        else if (sort === "price_desc") list.sort((a, b) => b.price - a.price);
-        else if (sort === "rating") list.sort((a, b) => b.rating - a.rating);
-        else if (sort === "reviews") list.sort((a, b) => b.reviews - a.reviews);
-        return list;
-    }, [search, selectedCategory, priceRange, inStockOnly, sort]);
+    // Fetch Categories
+    const { data: categoryData } = useGetAllCategoriesQuery({});
+    const categories: TCategory[] = categoryData || [];
 
-    // Pagination — reset to 1 whenever filters change
-    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-    const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+    // Fetch Products with real filters
+    const { data: productsData, isLoading, isError } = useGetAllProductsQuery({
+        search: search || undefined,
+        category: selectedCategory !== "All" ? selectedCategory : undefined,
+        minPrice: priceRange[0],
+        maxPrice: priceRange[1],
+        sort,
+        page,
+        limit: ITEMS_PER_PAGE,
+        // Since the server doesn't explicitly filter by 'isAvailable' boolean in getAllProducts currently, 
+        // we might do client-side filtering or assume API handles relevant query if added.
+    });
 
-    const handleFilterChange = <T,>(setter: (v: T) => void) => (v: T) => {
+    const products = productsData?.data || [];
+    const meta = productsData?.meta;
+    const totalPages = meta?.totalPages || 1;
+
+    // Reset page if filters change
+    const handleFilterChange = (setter: any) => (v: any) => {
         setter(v);
         setPage(1);
     };
@@ -292,9 +326,20 @@ export default function ProductsPage() {
     const activeFilterCount = [
         search.trim() !== "",
         selectedCategory !== "All",
-        priceRange[0] > 0 || priceRange[1] < 700,
+        priceRange[0] > 0 || priceRange[1] < 1000,
         inStockOnly,
     ].filter(Boolean).length;
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8]">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="w-10 h-10 animate-spin text-[#B5451B]" />
+                    <p className="text-gray-500 font-medium">Loading premium products...</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen" style={{ background: "#FAFAF8" }}>
@@ -308,7 +353,7 @@ export default function ProductsPage() {
                         All <span style={{ color: "#B5451B" }}>Products</span>
                     </h1>
                     <p className="text-gray-500 text-sm">
-                        {filtered.length} products found{selectedCategory !== "All" ? ` in ${selectedCategory}` : ""}
+                        {meta?.total || 0} products found{selectedCategory !== "All" ? ` in ${categories.find(c => c._id === selectedCategory)?.name || ''}` : ""}
                     </p>
                 </div>
             </div>
@@ -324,6 +369,7 @@ export default function ProductsPage() {
                                 selectedCategory={selectedCategory} setSelectedCategory={handleFilterChange(setSelectedCategory)}
                                 priceRange={priceRange} setPriceRange={handleFilterChange(setPriceRange)}
                                 inStockOnly={inStockOnly} setInStockOnly={handleFilterChange(setInStockOnly)}
+                                categories={categories}
                             />
                         </div>
                     </aside>
@@ -359,6 +405,7 @@ export default function ProductsPage() {
                                         selectedCategory={selectedCategory} setSelectedCategory={handleFilterChange(setSelectedCategory)}
                                         priceRange={priceRange} setPriceRange={handleFilterChange(setPriceRange)}
                                         inStockOnly={inStockOnly} setInStockOnly={handleFilterChange(setInStockOnly)}
+                                        categories={categories}
                                     />
                                 </SheetContent>
                             </Sheet>
@@ -369,7 +416,7 @@ export default function ProductsPage() {
                                     <span className="flex items-center gap-1 text-xs font-medium px-3 py-1 rounded-full cursor-pointer"
                                         style={{ background: "#B5451B15", color: "#B5451B" }}
                                         onClick={() => { setSelectedCategory("All"); setPage(1); }}>
-                                        {selectedCategory} <X className="w-3 h-3" />
+                                        {categories.find(c => c._id === selectedCategory)?.name} <X className="w-3 h-3" />
                                     </span>
                                 )}
                                 {inStockOnly && (
@@ -398,9 +445,13 @@ export default function ProductsPage() {
                         </div>
 
                         {/* Product grid */}
-                        {paginated.length > 0 ? (
+                        {isError ? (
+                            <div className="text-center py-24 text-red-500">
+                                Failed to fetch products. Please try again later.
+                            </div>
+                        ) : products.length > 0 ? (
                             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-4">
-                                {paginated.map((p) => <ProductCard key={p.id} p={p} />)}
+                                {products.map((p: TProduct) => <ProductCard key={p._id} p={p} />)}
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -409,7 +460,7 @@ export default function ProductsPage() {
                                 <p className="text-gray-400 text-sm mb-5">Try adjusting your search or filters</p>
                                 <Button variant="outline" size="sm" className="rounded-full"
                                     style={{ borderColor: "#B5451B", color: "#B5451B" }}
-                                    onClick={() => { setSearch(""); setSelectedCategory("All"); setPriceRange([0, 700]); setInStockOnly(false); }}>
+                                    onClick={() => { setSearch(""); setSelectedCategory("All"); setPriceRange([0, 1000]); setInStockOnly(false); }}>
                                     Clear Filters
                                 </Button>
                             </div>
@@ -421,13 +472,12 @@ export default function ProductsPage() {
                                 <p className="text-sm text-gray-500">
                                     Showing{" "}
                                     <span className="font-semibold text-gray-700">
-                                        {(page - 1) * ITEMS_PER_PAGE + 1}–{Math.min(page * ITEMS_PER_PAGE, filtered.length)}
+                                        {(page - 1) * ITEMS_PER_PAGE + 1}–{Math.min(page * ITEMS_PER_PAGE, meta?.total || 0)}
                                     </span>{" "}
-                                    of <span className="font-semibold text-gray-700">{filtered.length}</span> products
+                                    of <span className="font-semibold text-gray-700">{meta?.total}</span> products
                                 </p>
 
                                 <div className="flex items-center gap-1.5">
-                                    {/* Prev */}
                                     <button
                                         onClick={() => setPage(page - 1)}
                                         disabled={page === 1}
@@ -437,12 +487,9 @@ export default function ProductsPage() {
                                         ‹
                                     </button>
 
-                                    {/* Page numbers */}
                                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => {
                                         const show = n === 1 || n === totalPages || Math.abs(n - page) <= 1;
-                                        const ellipsis = (n === 2 && page > 4) || (n === totalPages - 1 && page < totalPages - 3);
                                         if (!show) return null;
-                                        if (ellipsis) return <span key={n} className="px-1 text-gray-400 text-sm">…</span>;
                                         return (
                                             <button
                                                 key={n}
@@ -459,7 +506,6 @@ export default function ProductsPage() {
                                         );
                                     })}
 
-                                    {/* Next */}
                                     <button
                                         onClick={() => setPage(page + 1)}
                                         disabled={page === totalPages}
