@@ -8,6 +8,7 @@ import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { useGetAllOrdersQuery } from "@/redux/api/orderApi";
 import { useGetAllUsersQuery } from "@/redux/api/userApi";
 import SalesChart from "@/components/dashboard/SalesChart";
+import OrderStatusPieChart from "@/components/dashboard/OrderStatusPieChart";
 import {
     Package, ShoppingCart, Users, TrendingUp, Shield,
     Bell, ChevronRight, Settings, CheckCircle, XCircle,
@@ -127,8 +128,59 @@ export default function SuperAdminDashboard() {
                     <SalesChart />
                 </div>
 
+                {/* Order Status Pie Chart */}
+                <div className="xl:col-span-1">
+                    <OrderStatusPieChart orders={ordersArray} />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+                {/* Recent Orders */}
+                <div className="xl:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                    <div className="flex items-center justify-between mb-4">
+                        <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Recent Orders</h2>
+                        <Link href="/dashboard/superadmin/orders" className="text-xs font-semibold text-purple-600 hover:underline">
+                            View all →
+                        </Link>
+                    </div>
+                    {recentOrders.length === 0 ? (
+                        <p className="text-sm text-gray-400 py-6 text-center">No orders yet.</p>
+                    ) : (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-gray-100">
+                                        <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Order #</th>
+                                        <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Customer</th>
+                                        <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
+                                        <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+                                        <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-50">
+                                    {recentOrders.map((order: any) => (
+                                        <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
+                                            <td className="py-3 px-3 font-semibold text-gray-900">{order.orderNumber}</td>
+                                            <td className="py-3 px-3 text-gray-600">{order.shippingAddress?.fullName || "—"}</td>
+                                            <td className="py-3 px-3 font-bold text-gray-900">৳{(order.totalAmount || 0).toLocaleString()}</td>
+                                            <td className="py-3 px-3">
+                                                <span className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold uppercase border ${statusColor(order.orderStatus)}`}>
+                                                    {order.orderStatus}
+                                                </span>
+                                            </td>
+                                            <td className="py-3 px-3 text-gray-400 text-xs">
+                                                {new Date(order.createdAt).toLocaleDateString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
                 {/* Quick Actions */}
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div className="xl:col-span-1 bg-white rounded-2xl border border-gray-100 shadow-sm p-5 h-fit">
                     <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4">Admin Controls</h2>
                     <div className="space-y-2">
                         {quickLinks.map((link) => (
@@ -151,50 +203,6 @@ export default function SuperAdminDashboard() {
                         ))}
                     </div>
                 </div>
-            </div>
-
-            {/* Recent Orders */}
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider">Recent Orders</h2>
-                    <Link href="/dashboard/superadmin/orders" className="text-xs font-semibold text-purple-600 hover:underline">
-                        View all →
-                    </Link>
-                </div>
-                {recentOrders.length === 0 ? (
-                    <p className="text-sm text-gray-400 py-6 text-center">No orders yet.</p>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-gray-100">
-                                    <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Order #</th>
-                                    <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Customer</th>
-                                    <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Amount</th>
-                                    <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
-                                    <th className="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-50">
-                                {recentOrders.map((order: any) => (
-                                    <tr key={order._id} className="hover:bg-gray-50/50 transition-colors">
-                                        <td className="py-3 px-3 font-semibold text-gray-900">{order.orderNumber}</td>
-                                        <td className="py-3 px-3 text-gray-600">{order.shippingAddress?.fullName || "—"}</td>
-                                        <td className="py-3 px-3 font-bold text-gray-900">৳{(order.totalAmount || 0).toLocaleString()}</td>
-                                        <td className="py-3 px-3">
-                                            <span className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold uppercase border ${statusColor(order.orderStatus)}`}>
-                                                {order.orderStatus}
-                                            </span>
-                                        </td>
-                                        <td className="py-3 px-3 text-gray-400 text-xs">
-                                            {new Date(order.createdAt).toLocaleDateString()}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
             </div>
         </div>
     );

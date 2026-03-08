@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import {
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-    BarChart, Bar
+    ComposedChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from "recharts";
 import { useGetSalesAnalyticsQuery } from "@/redux/api/orderApi";
 import { Loader2, TrendingUp } from "lucide-react";
@@ -12,7 +11,8 @@ export default function SalesChart() {
     const [period, setPeriod] = useState<"daily" | "monthly" | "yearly">("monthly");
     const { data, isLoading } = useGetSalesAnalyticsQuery(period);
 
-    const chartData = data?.data || [];
+    // console.log("Sales Data", data);
+    const chartData = data || [];
 
     if (isLoading) {
         return (
@@ -23,7 +23,7 @@ export default function SalesChart() {
     }
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6 shadow-sm">
+        <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-6 shadow-sm h-full">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -52,13 +52,12 @@ export default function SalesChart() {
                     <p className="font-medium">No sales data available for this period.</p>
                 </div>
             ) : (
-                <div className="space-y-12 mt-8">
-                    {/* Revenue Area Chart */}
+                <div className="mt-8">
+                    {/* Revenue & Orders Composed Chart */}
                     <div className="w-full">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-6">Revenue (৳)</h3>
-                        <div className="h-[280px]">
+                        <div className="h-[320px]">
                             <ResponsiveContainer width="100%" height="100%">
-                                <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                                <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                                     <defs>
                                         <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="5%" stopColor="#B5451B" stopOpacity={0.3} />
@@ -66,36 +65,21 @@ export default function SalesChart() {
                                         </linearGradient>
                                     </defs>
                                     <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} dy={10} />
-                                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={(val) => `৳${val}`} dx={-10} />
+                                    <YAxis yAxisId="left" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} tickFormatter={(val) => `৳${val}`} dx={-10} />
+                                    <YAxis yAxisId="right" orientation="right" allowDecimals={false} tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} dx={10} />
                                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
                                     <Tooltip
                                         contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                        formatter={(value: any) => [`৳${Number(value).toLocaleString()}`, 'Revenue']}
+                                        formatter={(value: any, name: any) => {
+                                            if (name === 'revenue') return [`৳${Number(value).toLocaleString()}`, 'Revenue'];
+                                            if (name === 'orders') return [value, 'Orders'];
+                                            return [value, name || ""];
+                                        }}
                                         labelStyle={{ fontWeight: 'bold', color: '#374151', marginBottom: '8px' }}
                                     />
-                                    <Area type="monotone" dataKey="revenue" stroke="#B5451B" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
-                                </AreaChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </div>
-
-                    {/* Orders Bar Chart */}
-                    <div className="w-full">
-                        <h3 className="text-sm font-semibold text-gray-700 mb-6">Orders Volume</h3>
-                        <div className="h-[220px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }} barSize={period === 'yearly' ? 60 : period === 'monthly' ? 40 : 20}>
-                                    <XAxis dataKey="date" tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} dy={10} />
-                                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} tickLine={false} axisLine={false} dx={-10} allowDecimals={false} />
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                    <Tooltip
-                                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                        formatter={(value: any) => [value, 'Orders']}
-                                        cursor={{ fill: '#f9fafb' }}
-                                        labelStyle={{ fontWeight: 'bold', color: '#374151', marginBottom: '8px' }}
-                                    />
-                                    <Bar dataKey="orders" fill="#D4860A" radius={[4, 4, 0, 0]} />
-                                </BarChart>
+                                    <Area yAxisId="left" type="monotone" dataKey="revenue" stroke="#B5451B" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+                                    <Line yAxisId="right" type="monotone" dataKey="orders" stroke="#D4860A" strokeWidth={2} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                                </ComposedChart>
                             </ResponsiveContainer>
                         </div>
                     </div>
