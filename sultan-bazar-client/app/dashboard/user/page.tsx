@@ -21,7 +21,10 @@ export default function UserDashboard() {
     const router = useRouter();
     const [userName, setUserName] = useState("");
 
-    const { data: myOrdersData, isLoading: ordersLoading } = useGetMyOrdersQuery({});
+    const { data: myOrdersData, isLoading: ordersLoading } = useGetMyOrdersQuery(
+        {},
+        { pollingInterval: 5000 } // Poll every 5 seconds for real-time status updates
+    );
 
     const orders: TOrder[] = Array.isArray(myOrdersData)
         ? myOrdersData
@@ -33,10 +36,13 @@ export default function UserDashboard() {
 
     const stats = {
         total: orders.length,
-        pending: orders.filter(o => o.orderStatus === "pending" || o.orderStatus === "confirmed" || o.orderStatus === "processing").length,
-        shipped: orders.filter(o => o.orderStatus === "shipped").length,
-        delivered: orders.filter(o => o.orderStatus === "delivered").length,
-        cancelled: orders.filter(o => o.orderStatus === "cancelled").length,
+        pending: orders.filter((o) => o.orderStatus === "pending").length,
+        confirmed: orders.filter((o) => o.orderStatus === "confirmed").length,
+        processing: orders.filter((o) => o.orderStatus === "processing").length,
+        shipped: orders.filter((o) => o.orderStatus === "shipped").length,
+        delivered: orders.filter((o) => o.orderStatus === "delivered").length,
+        cancelled: orders.filter((o) => o.orderStatus === "cancelled").length,
+        returned: orders.filter((o) => o.orderStatus === "returned").length,
     };
 
     useEffect(() => {
@@ -48,10 +54,13 @@ export default function UserDashboard() {
 
     const statCards = [
         { label: "Total Orders", value: stats.total, icon: ShoppingCart, color: "#B5451B", bg: "#B5451B15" },
-        { label: "In Progress", value: stats.pending, icon: Clock, color: "#D4860A", bg: "#D4860A15" },
-        { label: "Shipped", value: stats.shipped, icon: Truck, color: "#2563eb", bg: "#2563eb15" },
-        { label: "Completed", value: stats.delivered, icon: CheckCircle, color: "#16a34a", bg: "#16a34a15" },
-        { label: "Cancelled", value: stats.cancelled, icon: XCircle, color: "#dc2626", bg: "#dc262615" },
+        { label: "Pending", value: stats.pending, icon: Clock, color: "#f59e0b", bg: "#f59e0b15" },
+        { label: "Confirmed", value: stats.confirmed, icon: CheckCircle, color: "#3b82f6", bg: "#3b82f615" },
+        { label: "Processing", value: stats.processing, icon: Settings, color: "#8b5cf6", bg: "#8b5cf615" },
+        { label: "Cancelled", value: stats.cancelled, icon: XCircle, color: "#ef4444", bg: "#ef444415" },
+        { label: "Shipped", value: stats.shipped, icon: Truck, color: "#0ea5e9", bg: "#0ea5e915" },
+        { label: "Delivered", value: stats.delivered, icon: CheckCircle, color: "#10b981", bg: "#10b98115" },
+        { label: "Returned", value: stats.returned, icon: XCircle, color: "#6b7280", bg: "#6b728015" },
     ];
 
     // Recent orders (last 3)

@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="bn" suppressHydrationWarning>
-      <body className="antialiased">
+      <body className="antialiased" suppressHydrationWarning>
         <StoreProvider>
           <Navbar />
           <main>{children}</main>

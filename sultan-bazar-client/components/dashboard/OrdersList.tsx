@@ -133,11 +133,24 @@ export function OrdersList({ orders, title, description, showTabs = true }: Orde
             return order.orderStatus === "delivered" && order.items.some(item => !item.isReviewed);
         }
 
-        // "Completed" tab: show ALL delivered orders
         if (activeTab === "completed") return order.orderStatus === "delivered";
 
         return false;
     });
+
+    const getOrderCount = (tabId: string) => {
+        return orders.filter((order) => {
+            if (tabId === "all") return true;
+            if (tabId === "pending" && order.orderStatus === "pending") return true;
+            if (tabId === "confirmed" && (order.orderStatus === "confirmed" || order.orderStatus === "processing")) return true;
+            if (tabId === "shipped" && order.orderStatus === "shipped") return true;
+            if (tabId === "delivered") {
+                return order.orderStatus === "delivered" && order.items.some(item => !item.isReviewed);
+            }
+            if (tabId === "completed") return order.orderStatus === "delivered";
+            return false;
+        }).length;
+    };
 
     return (
         <div className="w-full">
@@ -152,20 +165,28 @@ export function OrdersList({ orders, title, description, showTabs = true }: Orde
             {/* Tabs Navigation */}
             {showTabs && (
                 <div className="flex overflow-x-auto hide-scrollbar border-b border-gray-200 mb-6 gap-4 sm:gap-8 relative">
-                    {TABS.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id)}
-                            className={`flex items-center gap-2 pb-3 px-1 whitespace-nowrap transition-colors relative font-medium text-sm
-                                ${activeTab === tab.id ? "text-[#B5451B]" : "text-gray-500 hover:text-[#B5451B]"}`}
-                        >
-                            <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? "text-[#B5451B]" : "text-gray-400"}`} />
-                            {tab.label}
-                            {activeTab === tab.id && (
-                                <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B5451B] rounded-t-lg" />
-                            )}
-                        </button>
-                    ))}
+                    {TABS.map((tab) => {
+                        const count = getOrderCount(tab.id);
+                        return (
+                            <button
+                                key={tab.id}
+                                onClick={() => setActiveTab(tab.id)}
+                                className={`flex items-center gap-2 pb-3 px-1 whitespace-nowrap transition-colors relative font-medium text-sm
+                                    ${activeTab === tab.id ? "text-[#B5451B]" : "text-gray-500 hover:text-[#B5451B]"}`}
+                            >
+                                <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? "text-[#B5451B]" : "text-gray-400"}`} />
+                                {tab.label}
+                                {count > 0 && (
+                                    <span className={`py-0.5 px-1 rounded-full text-xs font-bold ${activeTab === tab.id ? "bg-[#B5451B] text-white" : "bg-gray-100 text-gray-600"}`}>
+                                        {count}
+                                    </span>
+                                )}
+                                {activeTab === tab.id && (
+                                    <span className="absolute bottom-[-1px] left-0 w-full h-[2px] bg-[#B5451B] rounded-t-lg" />
+                                )}
+                            </button>
+                        );
+                    })}
                 </div>
             )}
 

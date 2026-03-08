@@ -49,6 +49,7 @@ export default function DashboardSidebar() {
     const router = useRouter();
     const [userInitial, setUserInitial] = useState("U");
     const [userName, setUserName] = useState("");
+    const [userPhoto, setUserPhoto] = useState<string | null>(null);
     const [role, setRole] = useState("user");
     const [mobileOpen, setMobileOpen] = useState(false);
     const sidebarRef = useRef<HTMLDivElement>(null);
@@ -61,6 +62,7 @@ export default function DashboardSidebar() {
             const name = user.name || user.username || user.email || "U";
             setUserName(name);
             setUserInitial(name.charAt(0).toUpperCase());
+            setUserPhoto(user.profilePicture || null);
         }
     }, []);
 
@@ -106,9 +108,18 @@ export default function DashboardSidebar() {
             {/* User card */}
             <div className="px-4 py-4 border-b border-gray-100">
                 <div className="flex items-center gap-3 bg-orange-50 rounded-xl p-3">
-                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                        style={{ background: "linear-gradient(135deg, #B5451B, #D4860A)" }}>
-                        {userInitial}
+                    <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 relative overflow-hidden"
+                        style={userPhoto ? {} : { background: "linear-gradient(135deg, #B5451B, #D4860A)" }}>
+                        {userPhoto ? (
+                            <Image
+                                src={userPhoto}
+                                alt={userName}
+                                fill
+                                className="object-cover"
+                            />
+                        ) : (
+                            userInitial
+                        )}
                     </div>
                     <div className="min-w-0">
                         <p className="font-semibold text-gray-900 text-sm truncate">{userName}</p>

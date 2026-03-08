@@ -26,6 +26,7 @@ export default function Navbar() {
     const [loggedIn, setLoggedIn] = useState(false);
     const [userInitial, setUserInitial] = useState("U");
     const [userName, setUserName] = useState("");
+    const [userPhoto, setUserPhoto] = useState<string | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -47,6 +48,7 @@ export default function Navbar() {
             const name = user.name || user.email || "U";
             setUserName(name);
             setUserInitial(name.charAt(0).toUpperCase());
+            setUserPhoto(user.profilePicture || null);
         } else {
             setLoggedIn(false);
         }
@@ -127,10 +129,20 @@ export default function Navbar() {
                                 <button
                                     onClick={() => setDropdownOpen(!dropdownOpen)}
                                     className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm transition-transform hover:scale-105"
-                                    style={{ background: "linear-gradient(135deg, #B5451B, #D4860A)" }}
+                                    style={userPhoto ? {} : { background: "linear-gradient(135deg, #B5451B, #D4860A)" }}
                                     title={userName}
                                 >
-                                    {userInitial}
+                                    {userPhoto ? (
+                                        <Image
+                                            src={userPhoto}
+                                            alt={userName}
+                                            width={36}
+                                            height={36}
+                                            className="w-full h-full object-cover rounded-full"
+                                        />
+                                    ) : (
+                                        userInitial
+                                    )}
                                 </button>
 
                                 {dropdownOpen && (
@@ -194,9 +206,18 @@ export default function Navbar() {
                                     {/* Logged-in user info in mobile drawer */}
                                     {loggedIn && (
                                         <div className="flex items-center gap-3 px-6 py-4 border-b bg-orange-50">
-                                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0"
-                                                style={{ background: "linear-gradient(135deg, #B5451B, #D4860A)" }}>
-                                                {userInitial}
+                                            <div className="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 relative overflow-hidden"
+                                                style={userPhoto ? {} : { background: "linear-gradient(135deg, #B5451B, #D4860A)" }}>
+                                                {userPhoto ? (
+                                                    <Image
+                                                        src={userPhoto}
+                                                        alt={userName}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                ) : (
+                                                    userInitial
+                                                )}
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="text-sm font-semibold text-gray-900 truncate">{userName}</p>

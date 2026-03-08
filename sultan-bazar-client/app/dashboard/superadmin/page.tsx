@@ -51,10 +51,13 @@ export default function SuperAdminDashboard() {
                 : [];
 
     const totalOrders = ordersArray.length;
-    const pendingOrders = ordersArray.filter((o: any) => o.orderStatus === "pending" || o.orderStatus === "processing" || o.orderStatus === "confirmed").length;
+    const pendingOrders = ordersArray.filter((o: any) => o.orderStatus === "pending").length;
+    const confirmedOrders = ordersArray.filter((o: any) => o.orderStatus === "confirmed").length;
+    const processingOrders = ordersArray.filter((o: any) => o.orderStatus === "processing").length;
     const shippedOrders = ordersArray.filter((o: any) => o.orderStatus === "shipped").length;
-    const completedOrders = ordersArray.filter((o: any) => o.orderStatus === "delivered").length;
+    const deliveredOrders = ordersArray.filter((o: any) => o.orderStatus === "delivered").length;
     const cancelledOrders = ordersArray.filter((o: any) => o.orderStatus === "cancelled").length;
+    const returnedOrders = ordersArray.filter((o: any) => o.orderStatus === "returned").length;
     const revenue = ordersArray
         .filter((o: any) => o.orderStatus === "delivered")
         .reduce((acc: number, o: any) => acc + (o.totalAmount || 0), 0);
@@ -64,14 +67,17 @@ export default function SuperAdminDashboard() {
         .slice(0, 5);
 
     const statCards = [
-        { label: "Total Orders", value: totalOrders, icon: ShoppingCart, color: "#D4860A", bg: "#D4860A15" },
-        { label: "Pending", value: pendingOrders, icon: Clock, color: "#f59e0b", bg: "#f59e0b15" },
-        { label: "Shipped", value: shippedOrders, icon: Truck, color: "#2563eb", bg: "#2563eb15" },
-        { label: "Completed", value: completedOrders, icon: CheckCircle, color: "#16a34a", bg: "#16a34a15" },
-        { label: "Cancelled", value: cancelledOrders, icon: XCircle, color: "#dc2626", bg: "#dc262615" },
-        { label: "Total Products", value: totalProducts, icon: Package, color: "#B5451B", bg: "#B5451B15" },
         { label: "Total Users", value: totalUsers, icon: Users, color: "#7c3aed", bg: "#7c3aed15" },
-        { label: "Revenue", value: `৳${revenue.toLocaleString()}`, icon: TrendingUp, color: "#059669", bg: "#05966915" },
+        { label: "Total Products", value: totalProducts, icon: Package, color: "#B5451B", bg: "#B5451B15" },
+        { label: "Total Orders", value: totalOrders, icon: ShoppingCart, color: "#D4860A", bg: "#D4860A15" },
+        { label: "Total Sales", value: `৳${revenue.toLocaleString()}`, icon: TrendingUp, color: "#059669", bg: "#05966915" },
+        { label: "Pending", value: pendingOrders, icon: Clock, color: "#f59e0b", bg: "#f59e0b15" },
+        { label: "Confirmed", value: confirmedOrders, icon: CheckCircle, color: "#3b82f6", bg: "#3b82f615" },
+        { label: "Processing", value: processingOrders, icon: Settings, color: "#8b5cf6", bg: "#8b5cf615" },
+        { label: "Shipped", value: shippedOrders, icon: Truck, color: "#0ea5e9", bg: "#0ea5e915" },
+        { label: "Delivered", value: deliveredOrders, icon: CheckCircle, color: "#10b981", bg: "#10b98115" },
+        { label: "Cancelled", value: cancelledOrders, icon: XCircle, color: "#ef4444", bg: "#ef444415" },
+        { label: "Returned", value: returnedOrders, icon: XCircle, color: "#6b7280", bg: "#6b728015" },
     ];
 
     const statusColor = (s: string) =>

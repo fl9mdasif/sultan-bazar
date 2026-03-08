@@ -5,7 +5,10 @@ import { OrdersList } from "@/components/dashboard/OrdersList";
 import { TOrder } from "@/types/common";
 
 export default function UserOrdersPage() {
-    const { data: myOrdersData, isLoading } = useGetMyOrdersQuery({});
+    const { data: myOrdersData, isLoading } = useGetMyOrdersQuery(
+        {},
+        { pollingInterval: 5000 }
+    );
 
     const orders: TOrder[] = Array.isArray(myOrdersData)
         ? myOrdersData
@@ -14,7 +17,6 @@ export default function UserOrdersPage() {
             : Array.isArray(myOrdersData?.data?.data)
                 ? myOrdersData.data.data
                 : [];
-
     if (isLoading) {
         return (
             <div className="p-6 lg:p-8 flex items-center justify-center min-h-[500px]">
