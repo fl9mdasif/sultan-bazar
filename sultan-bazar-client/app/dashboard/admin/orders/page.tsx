@@ -225,9 +225,9 @@ export default function AdminOrdersPage() {
                                     <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                         Amount
                                     </th>
-                                    <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                                    {/* <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                         Payment Status
-                                    </th>
+                                    </th> */}
                                     <th className="text-left px-5 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">
                                         Order Status
                                     </th>
@@ -310,7 +310,7 @@ export default function AdminOrdersPage() {
                                         </td>
 
                                         {/* Payment Status Dropdown */}
-                                        <td className="px-5 py-4">
+                                        {/* <td className="px-5 py-4">
                                             <select
                                                 className={`text-xs font-bold uppercase rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-offset-1 transition-all cursor-pointer ${PAYMENT_STATUS_COLORS[order.paymentStatus || "pending"]
                                                     } ${(isUpdatingPayment || isUpdating) ? "opacity-50 pointer-events-none" : ""}`}
@@ -324,7 +324,7 @@ export default function AdminOrdersPage() {
                                                 <option value="failed">Failed</option>
                                                 <option value="refunded">Refunded</option>
                                             </select>
-                                        </td>
+                                        </td> */}
 
                                         {/* Order Status Dropdown */}
                                         <td className="px-5 py-4">

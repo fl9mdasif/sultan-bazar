@@ -130,6 +130,24 @@
   .font-bengali {
     font-family: 'Hind Siliguri', sans-serif;
   }
+
+  /* ── Cursor pointer for all interactive elements ── */
+  button,
+  [role="button"],
+  a,
+  select,
+  label[for],
+  summary,
+  [tabindex]:not([tabindex="-1"]),
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="file"],
+  input[type="range"],
+  input[type="color"] {
+    cursor: pointer;
+  }
 }
 
 /* ── Brand override ── */

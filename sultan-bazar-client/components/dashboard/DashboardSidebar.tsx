@@ -87,7 +87,7 @@ export default function DashboardSidebar() {
     const SidebarContent = () => (
         <div className="flex flex-col h-full">
             {/* Brand */}
-            <div className="px-5 py-5 border-b border-gray-100">
+            {/* <div className="px-5 py-5 border-b border-gray-100">
                 <Link href="/" className="flex items-center gap-2">
                     <div className="relative w-32 h-10">
                         <Image
@@ -99,7 +99,7 @@ export default function DashboardSidebar() {
                         />
                     </div>
                 </Link>
-            </div>
+            </div> */}
 
             {/* User card */}
             <div className="px-4 py-4 border-b border-gray-100">
@@ -160,21 +160,25 @@ export default function DashboardSidebar() {
                 <SidebarContent />
             </aside>
 
-            {/* Mobile: top bar + slide-in drawer */}
-            <div className="lg:hidden">
-                <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100 sticky top-0 z-30">
-                    {/* <Link href="/" className="flex items-center gap-2">
-                        <span className="text-xl">🪔</span>
-                        <span className="font-extrabold text-sm" style={{ color: "#B5451B" }}>Sultan Bazar</span>
-                    </Link> */}
-                    <button onClick={() => setMobileOpen(true)} className="p-2 text-gray-600 hover:text-[#B5451B]">
-                        <Menu className="w-5 h-5" />
-                    </button>
-                </div>
+            {/* Mobile: floating hamburger button + slide-in drawer */}
+            {/* NOTE: This wrapper has NO width (fixed + w-0) so it never takes */}
+            {/* space in the flex row – the main content fills the full width.   */}
+            <div className="lg:hidden fixed top-0 left-0 z-30 w-0 h-0">
+                {/* Hamburger – fixed so it floats above content, takes no space */}
+                <button
+                    onClick={() => setMobileOpen(true)}
+                    className="fixed top-3 left-3 p-2 rounded-lg bg-white shadow-md text-gray-600 hover:text-[#B5451B] hover:shadow-lg transition-all"
+                    aria-label="Open menu"
+                >
+                    <Menu className="w-5 h-5" />
+                </button>
 
                 {/* Overlay */}
                 {mobileOpen && (
-                    <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+                    <div
+                        className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+                        onClick={() => setMobileOpen(false)}
+                    />
                 )}
 
                 {/* Drawer */}
@@ -183,7 +187,10 @@ export default function DashboardSidebar() {
                     className={`fixed top-0 left-0 h-full w-64 bg-white z-50 shadow-2xl transition-transform duration-300 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}
                 >
                     <div className="absolute top-3 right-3">
-                        <button onClick={() => setMobileOpen(false)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500">
+                        <button
+                            onClick={() => setMobileOpen(false)}
+                            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+                        >
                             <X className="w-4 h-4" />
                         </button>
                     </div>
