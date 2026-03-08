@@ -125,12 +125,12 @@ export default function Hero() {
                     >
                         {slide.cta.label} →
                     </Link>
-                    <Link
+                    {/* <Link
                         href="/categories"
                         className="inline-flex items-center gap-2 px-8 py-3 rounded-full font-bold text-sm transition-all hover:scale-105 bg-white/15 backdrop-blur-sm border border-white/30 text-white hover:bg-white/25"
                     >
                         View Categories
-                    </Link>
+                    </Link> */}
                 </div>
             </div>
 

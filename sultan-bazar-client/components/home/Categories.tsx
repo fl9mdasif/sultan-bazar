@@ -101,7 +101,7 @@ export default function Categories() {
                 )}
 
                 {/* View all */}
-                <div className="text-center mt-14">
+                {/* <div className="text-center mt-14">
                     <Link
                         href="/categories"
                         className="inline-flex items-center gap-2 text-sm font-bold hover:underline transition-colors uppercase tracking-widest"
@@ -110,7 +110,7 @@ export default function Categories() {
                         View All Categories
                         <div className="w-8 h-px bg-[#B5451B]" />
                     </Link>
-                </div>
+                </div> */}
             </div>
         </section>
     );

@@ -65,7 +65,6 @@ export default function AdminDashboard() {
         { label: "Total Products", value: totalProducts, icon: Package, color: "#B5451B", bg: "#B5451B15" },
         { label: "Total Users", value: totalUsers, icon: Users, color: "#7c3aed", bg: "#7c3aed15" },
         { label: "Total Orders", value: totalOrders, icon: ShoppingCart, color: "#D4860A", bg: "#D4860A15" },
-        { label: "Total sales", value: `৳${revenue.toLocaleString()}`, icon: TrendingUp, color: "#059669", bg: "#05966915" },
         { label: "Pending", value: pendingOrders, icon: Clock, color: "#f59e0b", bg: "#f59e0b15" },
         { label: "Confirmed", value: confirmedOrders, icon: CheckCircle, color: "#3b82f6", bg: "#3b82f615" },
         { label: "Processing", value: processingOrders, icon: Settings, color: "#8b5cf6", bg: "#8b5cf615" },
@@ -73,6 +72,7 @@ export default function AdminDashboard() {
         { label: "Shipped", value: shippedOrders, icon: Truck, color: "#0ea5e9", bg: "#0ea5e915" },
         { label: "Delivered", value: deliveredOrders, icon: CheckCircle, color: "#10b981", bg: "#10b98115" },
         { label: "Returned", value: returnedOrders, icon: XCircle, color: "#6b7280", bg: "#6b728015" },
+        { label: "Total Sales", value: `৳${revenue.toLocaleString()}`, icon: TrendingUp, color: "#059669", bg: "#05966915" },
     ];
 
     const statusColor = (s: string) =>
@@ -103,7 +103,9 @@ export default function AdminDashboard() {
             </div>
 
             {/* Stats grid — 4 on desktop, 2 on mobile */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6"> */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
+
                 {statCards.map((s) => (
                     <div key={s.label} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                         <div className="flex items-center justify-between mb-3">

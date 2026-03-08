@@ -115,7 +115,7 @@ export default function SuperAdminDashboard() {
             </div>
 
             {/* Stat cards — 4 on desktop, 2 on mobile */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
                 {statCards.map((s) => (
                     <div key={s.label} className="bg-white rounded-2xl p-4 border border-gray-100 shadow-sm">
                         <div className="mb-3">

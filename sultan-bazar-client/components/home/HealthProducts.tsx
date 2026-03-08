@@ -8,10 +8,14 @@ import { TProduct } from "@/types/common";
 import { Loader2, Leaf } from "lucide-react";
 
 export default function HealthProducts() {
-    // We'll try to fetch products tagged with 'Natural' or 'Health' if possible, 
-    // or just fetch 3 products to display here.
-    const { data, isLoading, isError } = useGetAllProductsQuery({ limit: 3 });
-    const products = data?.data || [];
+    // We fetch a larger limit to ensure we find enough tagged products locally
+    const { data, isLoading, isError } = useGetAllProductsQuery({ limit: 6 });
+    const allProducts = data?.data || [];
+
+    // Filter by tag "health" (case-insensitive)
+    const products = allProducts.filter((p: TProduct) =>
+        p.tags?.some(tag => tag.toLowerCase() === "health")
+    );
 
     if (isLoading) {
         return (
@@ -97,8 +101,10 @@ export default function HealthProducts() {
                                         </div>
                                     </div>
 
-                                    <p className="text-sm text-gray-500 leading-relaxed mb-8 line-clamp-3 min-h-[4.5rem]">
-                                        {p.description}
+                                    <p className="text-sm text-gray-500 leading-relaxed  line-clamp-3 min-h-[4.5rem]">
+                                        {/* {p.description} */}
+
+                                        {p.description.length > 90 ? p.description.slice(0, 90) + "..." : p.description}
                                     </p>
 
                                     <div className="flex items-center justify-between pt-6 border-t border-orange-50">
