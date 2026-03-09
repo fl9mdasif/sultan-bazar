@@ -143,6 +143,16 @@ const getAllOrders = async (query: Record<string, unknown>) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filter: Record<string, any> = {};
     if (status) filter.orderStatus = status;
+    if (query.paymentStatus) filter.paymentStatus = query.paymentStatus;
+
+    if (query.search) {
+        const searchTerm = query.search as string;
+        filter.$or = [
+            { orderNumber: { $regex: searchTerm, $options: 'i' } },
+            { 'shippingAddress.fullName': { $regex: searchTerm, $options: 'i' } },
+            { 'shippingAddress.phone': { $regex: searchTerm, $options: 'i' } },
+        ];
+    }
 
     const pageNum = Number(page);
     const limitNum = Number(limit);

@@ -14,6 +14,8 @@ import {
     Package,
     X,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -39,33 +41,27 @@ export default function AdminOrdersPage() {
     const [searchField, setSearchField] = useState<OrderSearchField>("orderNumber");
     const [orderStatusFilter, setOrderStatusFilter] = useState<string>("all");
     const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>("all");
+    const [page, setPage] = useState(1);
+    const limit = 3;
 
-    const { data, refetch, isLoading, isError } = useGetAllOrdersQuery({});
+    const { data, refetch, isLoading, isError } = useGetAllOrdersQuery({
+        page,
+        limit: 15,
+        status: orderStatusFilter !== "all" ? orderStatusFilter : undefined,
+        paymentStatus: paymentStatusFilter !== "all" ? paymentStatusFilter : undefined,
+        search: searchTerm || undefined,
+    });
     const [updateStatus, { isLoading: isUpdating }] = useUpdateOrderStatusMutation();
     const [updatePaymentStatus, { isLoading: isUpdatingPayment }] = useUpdatePaymentStatusMutation();
 
     const [selectedOrder, setSelectedOrder] = useState<TOrder | null>(null);
 
     // Extract orders
-    const orders: TOrder[] = Array.isArray(data)
-        ? data
-        : Array.isArray(data?.data)
-            ? data.data
-            : [];
+    const orders: TOrder[] = data?.data?.data ?? data?.data ?? data ?? [];
+    const totalPages = data?.meta?.totalPages ?? data?.data?.meta?.totalPages ?? 1;
 
-    // Filter orders
-    const filteredOrders = orders.filter((order) => {
-        const q = searchTerm.toLowerCase();
-        const matchesSearch = !q || (() => {
-            if (searchField === "orderNumber") return order.orderNumber.toLowerCase().includes(q);
-            if (searchField === "customerName") return order.shippingAddress.fullName.toLowerCase().includes(q);
-            if (searchField === "phone") return order.shippingAddress.phone.includes(searchTerm);
-            return true;
-        })();
-        const matchesOrderStatus = orderStatusFilter === "all" || order.orderStatus === orderStatusFilter;
-        const matchesPaymentStatus = paymentStatusFilter === "all" || (order.paymentStatus || "pending") === paymentStatusFilter;
-        return matchesSearch && matchesOrderStatus && matchesPaymentStatus;
-    });
+    // Filter orders REMOVED - server handles this
+    const filteredOrders = orders;
 
     const handleStatusChange = async (orderId: string, currentStatus: string, newStatus: string) => {
         if (currentStatus === newStatus) return;
@@ -109,7 +105,7 @@ export default function AdminOrdersPage() {
                 <div className="flex items-center bg-white border border-gray-200 rounded-xl overflow-hidden focus-within:border-[#B5451B] transition-colors flex-1 min-w-[220px] max-w-sm shadow-sm">
                     <select
                         value={searchField}
-                        onChange={(e) => { setSearchField(e.target.value as OrderSearchField); setSearchTerm(""); }}
+                        onChange={(e) => { setSearchField(e.target.value as OrderSearchField); setSearchTerm(""); setPage(1); }}
                         className="text-xs font-semibold text-gray-500 bg-gray-50 border-r border-gray-200 px-3 py-2.5 outline-none cursor-pointer h-full hover:bg-gray-100 transition-colors"
                     >
                         {ORDER_SEARCH_FIELDS.map(f => (
@@ -122,7 +118,7 @@ export default function AdminOrdersPage() {
                             type="text"
                             placeholder={ORDER_SEARCH_FIELDS.find(f => f.value === searchField)?.placeholder}
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => { setSearchTerm(e.target.value); setPage(1); }}
                             className="flex-1 bg-transparent text-sm outline-none placeholder:text-gray-400 py-2.5"
                         />
                         {searchTerm && (
@@ -137,7 +133,7 @@ export default function AdminOrdersPage() {
                 <div className="relative">
                     <select
                         value={orderStatusFilter}
-                        onChange={(e) => setOrderStatusFilter(e.target.value)}
+                        onChange={(e) => { setOrderStatusFilter(e.target.value); setPage(1); }}
                         className={`text-sm font-medium rounded-xl px-4 py-2.5 border outline-none cursor-pointer transition-colors appearance-none pr-8 shadow-sm ${orderStatusFilter !== "all" ? "border-[#B5451B] bg-orange-50 text-[#B5451B]" : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
                             }`}
                     >
@@ -368,6 +364,37 @@ export default function AdminOrdersPage() {
                     </div>
                 )}
             </div>
+
+            {/* Pagination UI */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-5">
+                    <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                        <button
+                            key={n}
+                            onClick={() => setPage(n)}
+                            className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${n === page ? "text-white shadow-sm" : "border border-gray-200 hover:bg-gray-50"
+                                }`}
+                            style={n === page ? { background: "linear-gradient(135deg, #B5451B, #D4860A)" } : {}}
+                        >
+                            {n}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
 
             <OrderDetailsModal
                 open={!!selectedOrder}

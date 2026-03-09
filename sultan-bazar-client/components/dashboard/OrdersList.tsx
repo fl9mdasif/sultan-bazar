@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { Package, Star, Clock, CheckCircle, Truck, PackageOpen, XCircle, Loader2, Ban } from "lucide-react";
+import { Package, Star, Clock, CheckCircle, Truck, PackageOpen, XCircle, Loader2, Ban, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import { ReviewModal } from "@/components/dashboard/ReviewModal";
 import Link from "next/link";
@@ -96,6 +96,8 @@ interface OrdersListProps {
 
 export function OrdersList({ orders, title, description, showTabs = true }: OrdersListProps) {
     const [activeTab, setActiveTab] = useState("all");
+    const [page, setPage] = useState(1);
+    const limit = 5;
 
     // Modal state
     const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -138,6 +140,9 @@ export function OrdersList({ orders, title, description, showTabs = true }: Orde
         return false;
     });
 
+    const totalPages = Math.ceil(filteredOrders.length / limit);
+    const paginatedOrders = filteredOrders.slice((page - 1) * limit, page * limit);
+
     const getOrderCount = (tabId: string) => {
         return orders.filter((order) => {
             if (tabId === "all") return true;
@@ -170,7 +175,7 @@ export function OrdersList({ orders, title, description, showTabs = true }: Orde
                         return (
                             <button
                                 key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
+                                onClick={() => { setActiveTab(tab.id); setPage(1); }}
                                 className={`flex items-center gap-2 pb-3 px-1 whitespace-nowrap transition-colors relative font-medium text-sm
                                     ${activeTab === tab.id ? "text-[#B5451B]" : "text-gray-500 hover:text-[#B5451B]"}`}
                             >
@@ -204,7 +209,7 @@ export function OrdersList({ orders, title, description, showTabs = true }: Orde
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {filteredOrders.map((order) => (
+                    {paginatedOrders.map((order) => (
                         <div key={order._id} className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
 
                             {/* Order Header info */}
@@ -330,6 +335,38 @@ export function OrdersList({ orders, title, description, showTabs = true }: Orde
 
                         </div>
                     ))}
+                </div>
+            )
+            }
+
+            {/* Pagination UI */}
+            {totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-8">
+                    <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors bg-white shadow-sm"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((n) => (
+                        <button
+                            key={n}
+                            onClick={() => setPage(n)}
+                            className={`w-8 h-8 rounded-lg text-sm font-medium transition-all ${n === page ? "text-white shadow-md scale-110" : "bg-white border border-gray-200 hover:bg-gray-50 text-gray-600"
+                                }`}
+                            style={n === page ? { background: "linear-gradient(135deg, #B5451B, #D4860A)" } : {}}
+                        >
+                            {n}
+                        </button>
+                    ))}
+                    <button
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 transition-colors bg-white shadow-sm"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
                 </div>
             )}
 

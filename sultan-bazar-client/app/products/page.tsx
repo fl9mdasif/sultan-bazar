@@ -13,6 +13,8 @@ import Link from "next/link";
 import Image from "next/image";
 import { useAddToCartMutation } from "@/redux/api/cartApi";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { isLoggedIn } from "@/services/auth.services";
 
 const SORT_OPTIONS = [
     { label: "Newest", value: "-createdAt" },
@@ -53,9 +55,18 @@ function ProductCard({ p }: { p: TProduct }) {
 
     const inStock = (variant.isAvailable ?? true) && variant.stock > 0;
 
+    const router = useRouter();
+
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (!isLoggedIn()) {
+            toast.error("Please login to add items to cart");
+            router.push(`/login?from=/products`);
+            return;
+        }
+
         try {
             await addToCart({
                 productId: p._id,

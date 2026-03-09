@@ -14,6 +14,7 @@ import { useGetSingleProductQuery, useGetAllProductsQuery } from "@/redux/api/pr
 import { useAddToCartMutation } from "@/redux/api/cartApi";
 import { TProduct, TVariant } from "@/types/common";
 import { toast } from "sonner";
+import { isLoggedIn } from "@/services/auth.services";
 
 function Stars({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
     const s = size === "sm" ? "w-3.5 h-3.5" : "w-5 h-5";
@@ -91,6 +92,12 @@ export default function ProductDetailPage() {
 
     const handleAddToCart = async (redirect = false) => {
         if (!inStock || isAddingToCart) return;
+
+        if (!isLoggedIn()) {
+            toast.error("Please login to proceed");
+            router.push(`/login?from=/products/${p._id}`);
+            return;
+        }
 
         if (redirect) {
             // "Buy Now" - direct to checkout with single product details

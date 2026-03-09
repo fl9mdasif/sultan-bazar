@@ -21,7 +21,7 @@ export default function AdminDashboard() {
     const [userName, setUserName] = useState("");
 
     const { data: productsData } = useGetAllProductsQuery({ limit: 1 });
-    const { data: ordersData } = useGetAllOrdersQuery(undefined);
+    const { data: ordersData } = useGetAllOrdersQuery({ limit: 5 });
     const { data: usersData } = useGetAllUsersQuery({ limit: 1 });
 
     const totalProducts =

@@ -52,10 +52,16 @@ export default function AdminProductsPage() {
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [categoryFilter, setCategoryFilter] = useState<string>("all");
     const [page, setPage] = useState(1);
-    const limit = 10;
+    const limit = 15;
 
     const { data, refetch, isLoading, isFetching } = useGetAllProductsQuery(
-        { search: search || undefined, page, limit },
+        {
+            search: search || undefined,
+            status: statusFilter !== "all" ? statusFilter : undefined,
+            category: categoryFilter !== "all" ? categoryFilter : undefined,
+            page,
+            limit
+        },
         { refetchOnMountOrArgChange: true }
     );
     const { data: categoryData } = useGetAllCategoriesQuery(undefined);
@@ -70,30 +76,12 @@ export default function AdminProductsPage() {
     const [editTarget, setEditTarget] = useState<TProduct | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<TProduct | null>(null);
 
-    const allProducts: TProduct[] = data?.data?.products ?? data?.data ?? [];
-    const totalPages: number = data?.data?.totalPages ?? 1;
+    // Products are on data?.data (due to pagination wrapper)
+    const products: TProduct[] = data?.data?.data ?? data?.data ?? [];
+    const totalPages: number = data?.meta?.totalPages ?? data?.data?.meta?.totalPages ?? 1;
 
-    // ── Client-side filtering ──────────────────────────────────────────
-    const products = allProducts.filter((p) => {
-        const q = search.toLowerCase();
-
-        // Search field filter
-        const matchesSearch = !q || (() => {
-            if (searchField === "name") return p.name.toLowerCase().includes(q);
-            if (searchField === "slug") return p.slug.toLowerCase().includes(q);
-            if (searchField === "tag") return (p.tags ?? []).some(t => t.toLowerCase().includes(q));
-            return true;
-        })();
-
-        // Status filter
-        const matchesStatus = statusFilter === "all" || (p.status ?? "active") === statusFilter;
-
-        // Category filter
-        const catId = typeof p.category === "object" ? (p.category as any)?._id : p.category;
-        const matchesCategory = categoryFilter === "all" || catId === categoryFilter;
-
-        return matchesSearch && matchesStatus && matchesCategory;
-    });
+    // ── Client-side filtering REMOVED ──────────────────────────────────────────
+    // Server handles this now.
 
     // ── Helpers ──────────────────────────────────────────────────────
     const productToForm = (p: TProduct): ReturnType<typeof emptyForm> => ({

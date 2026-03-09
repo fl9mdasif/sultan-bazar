@@ -1,11 +1,13 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { TProduct } from "@/types/common";
 import { Loader2, Leaf } from "lucide-react";
+import { isLoggedIn } from "@/services/auth.services";
+import { toast } from "sonner";
 
 export default function HealthProducts() {
     // We fetch a larger limit to ensure we find enough tagged products locally
@@ -31,6 +33,17 @@ export default function HealthProducts() {
     if (isError || products.length === 0) {
         return null; // Don't show the section if there's an error or no products
     }
+
+    const router = useRouter();
+
+    const handleShop = (id: string) => {
+        if (!isLoggedIn()) {
+            toast.error("Please login to see product details");
+            router.push(`/login?from=/products/${id}`);
+            return;
+        }
+        router.push(`/products/${id}`);
+    };
 
     return (
         <section className="py-12 lg:py-20 bg-white overflow-hidden">
@@ -114,15 +127,14 @@ export default function HealthProducts() {
                                                 ৳{price}
                                             </span>
                                         </div>
-                                        <Link href={`/products/${p._id}`}>
-                                            <Button
-                                                size="lg"
-                                                className="rounded-xl text-white font-bold px-8 shadow-lg hover:shadow-[#B5451B]/20 transition-all active:scale-95"
-                                                style={{ background: "#B5451B" }}
-                                            >
-                                                Shop →
-                                            </Button>
-                                        </Link>
+                                        <Button
+                                            onClick={() => handleShop(p._id)}
+                                            size="lg"
+                                            className="rounded-xl text-white font-bold px-8 shadow-lg hover:shadow-[#B5451B]/20 transition-all active:scale-95"
+                                            style={{ background: "#B5451B" }}
+                                        >
+                                            Shop →
+                                        </Button>
                                     </div>
                                 </div>
                             </div>

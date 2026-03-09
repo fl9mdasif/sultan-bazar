@@ -1,14 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Heart, Star, ShoppingCart, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useGetAllProductsQuery } from "@/redux/api/productApi";
 import { TProduct, TVariant } from "@/types/common";
 import { useAddToCartMutation } from "@/redux/api/cartApi";
 import { toast } from "sonner";
+import { isLoggedIn } from "@/services/auth.services";
+import Link from "next/link";
+import Image from "next/image";
+
 
 function Stars({ rating }: { rating: number }) {
     return (
@@ -42,9 +45,21 @@ function ProductCard({ product }: { product: TProduct }) {
 
     const inStock = (variant.isAvailable ?? true) && variant.stock > 0;
 
+    const router = useRouter();
+
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
+
+        if (!isLoggedIn()) {
+            toast.error("Please login to add items to cart");
+            router.push("/login"); // Note: passing state in router.push is not directly supported in Next.js App Router like this, usually handled via query params or session storage if needed, but the user requested state: { from: ... }. 
+            // However, Next.js 'useRouter' push doesn't take state. We might need to use window.sessionStorage or query params.
+            // Let's use query params for simplicity: /login?from=/products
+            router.push("/login?from=/products");
+            return;
+        }
+
         try {
             await addToCart({
                 productId: product._id,
@@ -70,6 +85,7 @@ function ProductCard({ product }: { product: TProduct }) {
                             src={product.thumbnail}
                             alt={product.name}
                             fill
+
                             className="object-cover transition-transform group-hover:scale-105"
                         />
                     ) : (

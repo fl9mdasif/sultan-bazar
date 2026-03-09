@@ -195,6 +195,12 @@ function CheckoutPageContent() {
     };
 
 
+    useEffect(() => {
+        if (!cartLoading && !isDirectBuy && (!cart?.items || cart.items.length === 0)) {
+            router.push("/dashboard/user/orders");
+        }
+    }, [cartLoading, isDirectBuy, cart?.items, router]);
+
     if (cartLoading || addressesLoading || singleProductLoading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8]">
@@ -204,7 +210,6 @@ function CheckoutPageContent() {
     }
 
     if (!isDirectBuy && (!cart?.items || cart.items.length === 0)) {
-        router.push("/dashboard/user/orders");
         return null;
     }
 

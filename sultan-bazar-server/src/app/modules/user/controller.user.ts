@@ -66,10 +66,11 @@ const setDefaultAddress = catchAsync(async (req, res) => {
 
 // GET /api/v1/users   (superAdmin only)
 const getAllUsers = catchAsync(async (req, res) => {
-    const { search, role, page, limit } = req.query as Record<string, string>;
+    const { search, role, page, limit, isBlocked } = req.query as Record<string, string>;
     const result = await userServices.getAllUsers({
         search,
         role,
+        isBlocked,
         page: page ? Number(page) : undefined,
         limit: limit ? Number(limit) : undefined,
     });

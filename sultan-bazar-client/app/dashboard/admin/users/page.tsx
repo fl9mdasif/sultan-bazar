@@ -83,7 +83,7 @@ export default function AdminUsersPage() {
     const [roleFilter, setRoleFilter] = useState("all");
     const [blockFilter, setBlockFilter] = useState("all");
     const [page, setPage] = useState(1);
-    const limit = 15;
+    const limit = 20;
 
     const [deleteTarget, setDeleteTarget] = useState<TUser | null>(null);
     const [updatingRoleId, setUpdatingRoleId] = useState<string | null>(null);
@@ -97,7 +97,13 @@ export default function AdminUsersPage() {
     const isSuperAdmin = viewerRole === "superadmin" || viewerRole === "superAdmin";
 
     const { data, isLoading, isFetching, refetch } = useGetAllUsersQuery(
-        { search: search || undefined, role: roleFilter !== "all" ? roleFilter : undefined, page, limit },
+        {
+            search: search || undefined,
+            role: roleFilter !== "all" ? roleFilter : undefined,
+            isBlocked: blockFilter === "all" ? undefined : blockFilter === "blocked",
+            page,
+            limit
+        },
         { refetchOnMountOrArgChange: true }
     );
 
@@ -109,10 +115,8 @@ export default function AdminUsersPage() {
     const users: TUser[] = raw?.users ?? [];
     const totalPages: number = raw?.totalPages ?? 1;
 
-    // Client-side block filter
-    const filteredUsers = users.filter((u) =>
-        blockFilter === "all" ? true : blockFilter === "blocked" ? u.isBlocked : !u.isBlocked
-    );
+    // Client-side block filter REMOVED - server handles this
+    const filteredUsers = users;
 
     const handleRoleChange = async (user: TUser, newRole: string) => {
         setUpdatingRoleId(user._id);

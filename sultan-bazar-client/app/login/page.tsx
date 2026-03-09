@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { loginUser } from "@/services/actions/loginUser";
 import { storeUserInfo } from "@/services/auth.services";
@@ -26,6 +27,9 @@ export default function LoginPage() {
         return e;
     };
 
+    const searchParams = useSearchParams();
+    const from = searchParams.get("from");
+
     const handleSubmit = async (ev: React.FormEvent) => {
         ev.preventDefault();
         const errs = validate();
@@ -40,7 +44,7 @@ export default function LoginPage() {
             if (res?.data?.accessToken) {
                 storeUserInfo({ accessToken: res.data.accessToken });
                 toast.success(res?.message || "Welcome back!");
-                window.location.href = "/dashboard";
+                window.location.href = from || "/dashboard";
             } else {
                 setServerError(res?.message || "Invalid email or password.");
             }

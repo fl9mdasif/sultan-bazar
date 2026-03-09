@@ -160,6 +160,7 @@ const setDefaultAddress = async (userId: string, addressId: string) => {
 const getAllUsers = async (query: {
     search?: string;
     role?: string;
+    isBlocked?: string | boolean;
     page?: number;
     limit?: number;
 }) => {
@@ -174,6 +175,9 @@ const getAllUsers = async (query: {
         ];
     }
     if (role) filter.role = role;
+    if (query.isBlocked !== undefined) {
+        filter.isBlocked = query.isBlocked === 'true' || query.isBlocked === true;
+    }
 
     const total = await User.countDocuments(filter);
     const users = await User.find(filter)

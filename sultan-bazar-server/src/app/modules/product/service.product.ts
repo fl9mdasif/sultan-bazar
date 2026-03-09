@@ -52,9 +52,14 @@ const getAllProducts = async (query: Record<string, unknown>) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const filter: Record<string, any> = {};
 
-    // Full-text search
+    // Improved search (substring matching)
     if (search) {
-        filter.$text = { $search: search as string };
+        const searchTerm = search as string;
+        filter.$or = [
+            { name: { $regex: searchTerm, $options: 'i' } },
+            { tags: { $regex: searchTerm, $options: 'i' } },
+            { description: { $regex: searchTerm, $options: 'i' } },
+        ];
     }
 
     if (category) filter.category = category;
