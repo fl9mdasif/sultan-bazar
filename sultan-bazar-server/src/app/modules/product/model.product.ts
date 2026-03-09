@@ -52,7 +52,6 @@ const productSchema = new Schema(
 
 // Index for fast search
 productSchema.index({ name: 'text', description: 'text', tags: 'text' });
-productSchema.index({ slug: 1 });
 productSchema.index({ category: 1, status: 1 });
 
 export const Product = model('Product', productSchema);

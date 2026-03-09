@@ -20,4 +20,6 @@ export default {
   cloud_name: process.env.CLOUD_NAME,
   cloud_api_Key: process.env.CLOUD_API_KEY,
   cloud_api_secret: process.env.CLOUD_API_SECRET,
+  plunk_secret_key: process.env.PLUNK_SECRET_KEY,
+  admin_email: process.env.ADMIN_EMAIL,
 };

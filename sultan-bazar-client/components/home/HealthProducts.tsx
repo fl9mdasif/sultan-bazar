@@ -10,6 +10,7 @@ import { isLoggedIn } from "@/services/auth.services";
 import { toast } from "sonner";
 
 export default function HealthProducts() {
+    const router = useRouter();
     // We fetch a larger limit to ensure we find enough tagged products locally
     const { data, isLoading, isError } = useGetAllProductsQuery({ limit: 6 });
     const allProducts = data?.data || [];
@@ -33,8 +34,6 @@ export default function HealthProducts() {
     if (isError || products.length === 0) {
         return null; // Don't show the section if there's an error or no products
     }
-
-    const router = useRouter();
 
     const handleShop = (id: string) => {
         if (!isLoggedIn()) {

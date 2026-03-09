@@ -7,6 +7,9 @@ import { generateOrderNumber } from './utils.order';
 import { FREE_SHIPPING_THRESHOLD, SHIPPING_CHARGE } from './const.order';
 import { TOrder, TOrderStatus, TPaymentStatus } from './interface.order';
 import { userServices } from '../user/service.user';
+import { sendEmail } from '../../utils/sendEmail';
+import { createAdminOrderNotificationEmail, createUserOrderShippedEmail } from '../../helpers/emailTemplate';
+import config from '../../config';
 
 // ── Place Order ────────────────────────────────────────────────────────────────
 const placeOrder = async (
@@ -102,6 +105,18 @@ const placeOrder = async (
 
     // 6. Clear cart items after successful order
     await Cart.findOneAndUpdate({ user: userId }, { items: [] });
+
+    // 7. Notify Admin via Email (Fire-and-forget)
+    (async () => {
+        const populatedOrder = await Order.findById(order._id).populate('items.product', 'name thumbnail');
+        if (populatedOrder) {
+            sendEmail(
+                config.admin_email as string,
+                `New Order Received: #${order.orderNumber}`,
+                createAdminOrderNotificationEmail(populatedOrder),
+            );
+        }
+    })();
 
     return order;
 };
@@ -208,6 +223,21 @@ const updateOrderStatus = async (
     }
 
     await order.save();
+
+    // Notify User if status is "shipped"
+    if (status === 'shipped') {
+        const populatedOrder = await Order.findById(order._id)
+            .populate('user', 'name email')
+            .populate('items.product', 'name thumbnail');
+
+        if (populatedOrder && (populatedOrder.user as any)?.email) {
+            sendEmail(
+                (populatedOrder.user as any).email,
+                `Your Order #${order.orderNumber} has been Shipped!`,
+                createUserOrderShippedEmail(populatedOrder),
+            );
+        }
+    }
     return order;
 };
 

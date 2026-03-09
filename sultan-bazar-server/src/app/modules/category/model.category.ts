@@ -15,7 +15,6 @@ const categorySchema = new Schema(
   { timestamps: true }
 );
 
-categorySchema.index({ slug: 1 });
 // categorySchema.index({ parent: 1 });
 
 export const Category = model('Category', categorySchema);
