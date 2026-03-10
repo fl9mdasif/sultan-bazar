@@ -4,6 +4,8 @@ import { useState } from "react";
 import Image from "next/image";
 import { MapPin, Phone, Mail, Clock, Send, CheckCircle, MessageSquare, Facebook, Instagram } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { sendContactEmail } from "@/services/actions/sendContactEmail";
+import { toast } from "sonner";
 
 const CONTACT_INFO = [
     {
@@ -39,6 +41,7 @@ const SUBJECTS = [
 
 export default function ContactPage() {
     const [submitted, setSubmitted] = useState(false);
+    const [loading, setLoading] = useState(false);
     const [form, setForm] = useState({ name: "", email: "", phone: "", subject: "", message: "" });
     const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -51,12 +54,27 @@ export default function ContactPage() {
         return e;
     };
 
-    const handleSubmit = (ev: React.FormEvent) => {
+    const handleSubmit = async (ev: React.FormEvent) => {
         ev.preventDefault();
         const errs = validate();
         if (Object.keys(errs).length) { setErrors(errs); return; }
+
         setErrors({});
-        setSubmitted(true);
+        setLoading(true);
+
+        try {
+            const res = await sendContactEmail(form);
+            if (res.success) {
+                setSubmitted(true);
+                toast.success("Message sent successfully!");
+            } else {
+                toast.error(res.error || "Failed to send message. Please try again.");
+            }
+        } catch (error) {
+            toast.error("Something went wrong. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const set = (key: string) => (ev: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -242,9 +260,19 @@ export default function ContactPage() {
 
                                         <Button
                                             type="submit"
+                                            disabled={loading}
                                             className="w-full text-white font-semibold rounded-full py-3 h-auto flex items-center justify-center gap-2"
                                             style={{ background: "#B5451B" }}>
-                                            <Send className="w-4 h-4" /> Send Message
+                                            {loading ? (
+                                                <>
+                                                    <span className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin"></span>
+                                                    Sending...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Send className="w-4 h-4" /> Send Message
+                                                </>
+                                            )}
                                         </Button>
                                     </form>
                                 </>

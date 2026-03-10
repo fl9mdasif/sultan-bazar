@@ -20,7 +20,23 @@ const registerUser = catchAsync(async (req, res) => {
 const loginUser = catchAsync(async (req, res) => {
   const result = await authServices.loginUser(req.body);
 
-  const { data, accessToken } = result;
+  const { data, accessToken, refreshToken } = result;
+
+  // Set refresh token in cookie if available
+  if (refreshToken) {
+    res.cookie('refreshToken', refreshToken, {
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: true,
+      sameSite: 'lax', // Use lax for better compatibility during development
+    });
+  }
+
+  // Set access token in cookie
+  res.cookie('accessToken', accessToken, {
+    secure: process.env.NODE_ENV === 'production',
+    httpOnly: true,
+    sameSite: 'lax',
+  });
 
   response.createSendResponse(res, {
     statusCode: httpStatus.OK,
@@ -28,8 +44,20 @@ const loginUser = catchAsync(async (req, res) => {
     message: 'User login successfully!',
     data: {
       user: data.jwtPayload,
-      accessToken: accessToken,
+      accessToken,
     },
+  });
+});
+
+const logoutUser = catchAsync(async (req, res) => {
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+
+  response.createSendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User logged out successfully!',
+    data: null,
   });
 });
 
@@ -74,4 +102,5 @@ export const authControllers = {
   registerUser,
   changePassword,
   refreshToken,
+  logoutUser,
 };

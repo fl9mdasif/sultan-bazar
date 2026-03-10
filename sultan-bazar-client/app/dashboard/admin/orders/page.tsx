@@ -56,6 +56,8 @@ export default function AdminOrdersPage() {
 
     const [selectedOrder, setSelectedOrder] = useState<TOrder | null>(null);
 
+
+    // console.log(selectedOrder);
     // Extract orders
     const orders: TOrder[] = data?.data?.data ?? data?.data ?? data ?? [];
     const totalPages = data?.meta?.totalPages ?? data?.data?.meta?.totalPages ?? 1;
@@ -75,15 +77,15 @@ export default function AdminOrdersPage() {
         }
     };
 
-    const handlePaymentStatusChange = async (orderId: string, currentStatus: string, newStatus: string) => {
-        if (currentStatus === newStatus) return;
-        try {
-            await updatePaymentStatus({ id: orderId, data: { paymentStatus: newStatus } }).unwrap();
-            toast.success("Payment status updated");
-        } catch (err: any) {
-            toast.error(err.data?.message || "Failed to update payment status");
-        }
-    };
+    // const handlePaymentStatusChange = async (orderId: string, currentStatus: string, newStatus: string) => {
+    //     if (currentStatus === newStatus) return;
+    //     try {
+    //         await updatePaymentStatus({ id: orderId, data: { paymentStatus: newStatus } }).unwrap();
+    //         toast.success("Payment status updated");
+    //     } catch (err: any) {
+    //         toast.error(err.data?.message || "Failed to update payment status");
+    //     }
+    // };
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
