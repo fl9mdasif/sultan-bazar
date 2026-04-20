@@ -35,6 +35,15 @@ const SLIDES = [
 export default function Hero() {
     const [current, setCurrent] = useState(0);
     const [animating, setAnimating] = useState(false);
+    const [screenWidth, setScreenWidth] = useState(0);
+
+    // Track window width safely
+    useEffect(() => {
+        setScreenWidth(window.innerWidth);
+        const handleResize = () => setScreenWidth(window.innerWidth);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const goTo = useCallback((idx: number) => {
         if (animating) return;
@@ -154,7 +163,7 @@ export default function Hero() {
                         onClick={() => goTo(i)}
                         className="transition-all rounded-full"
                         style={{
-                            width: i === current ? (window.innerWidth < 640 ? 16 : 24) : 8,
+                            width: i === current ? (screenWidth < 640 ? 16 : 24) : 8,
                             height: 6,
                             background: i === current ? "#D4860A" : "rgba(255,255,255,0.5)",
                         }}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp, ShoppingCart, Heart, Star, Filter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -307,8 +307,8 @@ function FilterPanel({
     );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
-export default function ProductsPage() {
+// ── Content Component ──────────────────────────────────────────────────────────
+function ProductsPageContent() {
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [priceRange, setPriceRange] = useState([0, 1000]);
@@ -559,5 +559,18 @@ export default function ProductsPage() {
                 </div>
             </div>
         </div>
+    );
+}
+
+// ── Main Export ─────────────────────────────────────────────────────────────────
+export default function ProductsPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-[#FAFAF8]">
+                <Loader2 className="w-10 h-10 animate-spin text-[#B5451B]" />
+            </div>
+        }>
+            <ProductsPageContent />
+        </Suspense>
     );
 }

@@ -44,10 +44,6 @@ export function OrderDetailsModal({
 }) {
     if (!open || !order) return null;
 
-    const handlePrint = () => {
-        window.print();
-    };
-
     return (
         <>
             {/* ─── Global Print Styles ─── */}

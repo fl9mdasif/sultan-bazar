@@ -127,10 +127,13 @@ export default function ProductDetailPage() {
     };
 
     const handleShare = async () => {
+        if (typeof window === "undefined") return;
+
+        const currentUrl = window.location.href;
         const shareData = {
             title: p.name,
             text: `Check out this authentic ${p.name} from Sultan Bazar!`,
-            url: window.location.href,
+            url: currentUrl,
         };
 
         try {
@@ -138,7 +141,7 @@ export default function ProductDetailPage() {
                 await navigator.share(shareData);
                 toast.success("Shared successfully!");
             } else {
-                await navigator.clipboard.writeText(window.location.href);
+                await navigator.clipboard.writeText(currentUrl);
                 toast.success("Link copied to clipboard!");
             }
         } catch (err) {
