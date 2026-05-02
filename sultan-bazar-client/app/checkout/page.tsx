@@ -9,7 +9,7 @@ import {
 } from "@/redux/api/userApi";
 import { useGetCartQuery } from "@/redux/api/cartApi";
 import { usePlaceOrderMutation } from "@/redux/api/orderApi";
-import { TCart, TSavedAddress, TUser } from "@/types/common";
+import { TCart, TSavedAddress } from "@/types/common";
 import {
     MapPin,
     Truck,
@@ -38,7 +38,7 @@ import OrderSuccessModal from "@/components/checkout/OrderSuccessModal";
 
 // Redux local cart
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
-import { clearLocalCart, LocalCartItem } from "@/redux/features/localCartSlice";
+import { clearLocalCart } from "@/redux/features/localCartSlice";
 import { useAddToCartMutation } from "@/redux/api/cartApi";
 
 // ── Address Card ─────────────────────────────────────────────────────────────
