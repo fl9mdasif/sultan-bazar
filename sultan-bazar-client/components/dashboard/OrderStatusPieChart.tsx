@@ -30,6 +30,26 @@ export default function OrderStatusPieChart({ orders }: { orders: any[] }) {
     // Sort so largest segment is first
     data.sort((a, b) => b.value - a.value);
 
+    const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, value, name }: any) => {
+        const RADIAN = Math.PI / 180;
+        const radius = outerRadius + 25;
+        const x = cx + radius * Math.cos(-midAngle * RADIAN);
+        const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+        return (
+            <text
+                x={x}
+                y={y}
+                fill="#4b5563"
+                textAnchor={x > cx ? 'start' : 'end'}
+                dominantBaseline="central"
+                className="text-[10px] font-bold"
+            >
+                {`${name} (${value})`}
+            </text>
+        );
+    };
+
     return (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 shadow-sm flex flex-col h-full">
             <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-6 flex items-center gap-2">
@@ -55,6 +75,8 @@ export default function OrderStatusPieChart({ orders }: { orders: any[] }) {
                                 paddingAngle={2}
                                 dataKey="value"
                                 stroke="none"
+                                label={renderCustomizedLabel}
+                                labelLine={{ stroke: '#e5e7eb', strokeWidth: 1 }}
                             >
                                 {data.map((entry, index) => (
                                     <Cell key={`cell-${index}`} fill={COLORS[entry.rawKey] || "#cbd5e1"} />
@@ -69,7 +91,7 @@ export default function OrderStatusPieChart({ orders }: { orders: any[] }) {
                                 verticalAlign="bottom"
                                 height={36}
                                 iconType="circle"
-                                wrapperStyle={{ fontSize: '12px', fontWeight: 500 }}
+                                wrapperStyle={{ fontSize: '11px', fontWeight: 500, paddingTop: '10px' }}
                             />
                         </RechartsPieChart>
                     </ResponsiveContainer>

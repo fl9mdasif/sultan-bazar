@@ -77,15 +77,6 @@ export default function AdminOrdersPage() {
         }
     };
 
-    // const handlePaymentStatusChange = async (orderId: string, currentStatus: string, newStatus: string) => {
-    //     if (currentStatus === newStatus) return;
-    //     try {
-    //         await updatePaymentStatus({ id: orderId, data: { paymentStatus: newStatus } }).unwrap();
-    //         toast.success("Payment status updated");
-    //     } catch (err: any) {
-    //         toast.error(err.data?.message || "Failed to update payment status");
-    //     }
-    // };
 
     return (
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">

@@ -34,6 +34,7 @@ import { useGetSingleProductQuery } from "@/redux/api/productApi";
 import { TProduct, TVariant } from "@/types/common";
 import { AddressModal } from "@/components/dashboard/AddressModal";
 import { isLoggedIn, storeUserInfo } from "@/services/auth.services";
+import OrderSuccessModal from "@/components/checkout/OrderSuccessModal";
 
 // Redux local cart
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
@@ -298,6 +299,7 @@ function CheckoutPageContent() {
         postalCode: "",
     });
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
 
     const validateGuestForm = () => {
         const newErrors: Record<string, string> = {};
@@ -407,7 +409,8 @@ function CheckoutPageContent() {
             await placeOrder(orderData).unwrap();
             toast.success("Order placed successfully!");
             if (!isDirectBuy) refetchCart();
-            router.push("/dashboard/user/orders");
+            // router.push("/dashboard/user/orders");
+            setIsSuccessModalOpen(true);
         } catch (err: any) {
             toast.error(err?.data?.message || "Failed to place order");
         }
@@ -482,7 +485,8 @@ function CheckoutPageContent() {
             dispatch(clearLocalCart());
 
             toast.success("Order placed successfully! 🎉", { id: "guest-checkout" });
-            router.push("/products");
+            // router.push("/products");
+            setIsSuccessModalOpen(true);
         } catch (err: any) {
             toast.error(err?.data?.message || "Failed to place order", {
                 id: "guest-checkout",
@@ -496,11 +500,12 @@ function CheckoutPageContent() {
             !cartLoading &&
             !isDirectBuy &&
             userLoggedIn &&
+            !isSuccessModalOpen &&
             (!cart?.items || cart.items.length === 0)
         ) {
             router.push("/dashboard/user/orders");
         }
-    }, [cartLoading, isDirectBuy, userLoggedIn, cart?.items, router]);
+    }, [cartLoading, isDirectBuy, userLoggedIn, cart?.items, router, isSuccessModalOpen]);
 
     // ── Loading guard ──────────────────────────────────────────────────
     if (
@@ -514,7 +519,7 @@ function CheckoutPageContent() {
         );
     }
 
-    if (!isDirectBuy && userLoggedIn && (!cart?.items || cart.items.length === 0)) {
+    if (!isDirectBuy && userLoggedIn && !isSuccessModalOpen && (!cart?.items || cart.items.length === 0)) {
         return null;
     }
 
@@ -751,6 +756,21 @@ function CheckoutPageContent() {
                                     )}
                                 </Button>
 
+
+                                {!userLoggedIn && (
+                                    <div className="mt-5 p-5 rounded-[1.5rem] bg-orange-50 border border-orange-100 shadow-sm relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 w-20 h-20 bg-[#B5451B]/5 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700" />
+                                        <p className="text-[11px] text-gray-700 leading-relaxed relative z-10">
+                                            <span className="font-black text-[#B5451B] uppercase tracking-wider block mb-1">Account Creation</span>
+                                            We&apos;ll create an account for you using your email.
+                                            <span className="font-bold text-[#B5451B] block mt-1">Default Password: 123456</span>
+                                            You can login later to track orders and manage your profile.
+                                        </p>
+                                    </div>
+                                )}
+
+
+
                                 {!userLoggedIn && (
                                     <p className="mt-4 text-center text-xs text-gray-400 font-medium">
                                         Already have an account?{" "}
@@ -777,6 +797,13 @@ function CheckoutPageContent() {
                     </aside>
                 </div>
             </div>
+
+            <OrderSuccessModal
+                isOpen={isSuccessModalOpen}
+                orderItems={checkoutItems}
+                totalPrice={total}
+            />
+
             {userLoggedIn && (
                 <AddressModal
                     isOpen={isAddressModalOpen}
