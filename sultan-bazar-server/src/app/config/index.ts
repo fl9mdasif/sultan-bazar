@@ -1,13 +1,17 @@
 import dotenv from 'dotenv';
 import path from 'path';
 
-dotenv.config({ path: path.join(process.cwd(), '.env') }); // duita path join kora hoise
-// dotenv.config(//file path )
+// Development এ .env file থেকে আসে use for local development and production এ environment variable থেকে আসে
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: path.join(process.cwd(), '.env') });
+} else {
+  dotenv.config();
+}
 
 // we got everything from .env by config the file
 export default {
   NODE_ENV: process.env.NODE_ENV,
-  port: process.env.PORT,
+  port: process.env.PORT || 5000,
   database_url: process.env.DATABASE_URL,
   bcrypt_salt_round: process.env.BCRYPT_SALT_ROUND,
   default_pass: process.env.DEFAULT_PASS,
