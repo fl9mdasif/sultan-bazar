@@ -22,8 +22,6 @@ import {
     Home,
     Briefcase,
     Building2,
-    User,
-    Phone,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -40,6 +38,22 @@ import OrderSuccessModal from "@/components/checkout/OrderSuccessModal";
 import { useAppDispatch, useAppSelector } from "@/redux/hooks";
 import { clearLocalCart } from "@/redux/features/localCartSlice";
 import { useAddToCartMutation } from "@/redux/api/cartApi";
+
+type GuestCheckoutResponse = {
+    accessToken?: string;
+    data?: { accessToken?: string };
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+    if (error instanceof Error) return error.message;
+    if (typeof error !== "object" || error === null) return fallback;
+
+    const responseData = "data" in error ? error.data : undefined;
+    if (typeof responseData === "object" && responseData !== null && "message" in responseData) {
+        return typeof responseData.message === "string" ? responseData.message : fallback;
+    }
+    return fallback;
+};
 
 // ── Address Card ─────────────────────────────────────────────────────────────
 function AddressCard({
@@ -411,8 +425,8 @@ function CheckoutPageContent() {
             if (!isDirectBuy) refetchCart();
             // router.push("/dashboard/user/orders");
             setIsSuccessModalOpen(true);
-        } catch (err: any) {
-            toast.error(err?.data?.message || "Failed to place order");
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, "Failed to place order"));
         }
     };
 
@@ -429,12 +443,12 @@ function CheckoutPageContent() {
 
         try {
             const { fullName, email, phone, address, city, district } = guestForm;
-            // 1. Auto-register / login ghost user
-            toast.loading("Setting up your account...", { id: "guest-checkout" });
-            const res = await guestCheckout({ email, fullName, phone }).unwrap();
+            // 1. Create an isolated temporary session for this guest purchase.
+            toast.loading("Preparing secure guest checkout...", { id: "guest-checkout" });
+            const res = await guestCheckout({ email, fullName, phone }).unwrap() as GuestCheckoutResponse;
 
             // Handle both { data: { accessToken } } and direct { accessToken } formats
-            const accessToken = res?.data?.accessToken || (res as any)?.accessToken;
+            const accessToken = res.data?.accessToken ?? res.accessToken;
 
             if (!accessToken) {
                 throw new Error("Failed to authenticate your session");
@@ -452,7 +466,7 @@ function CheckoutPageContent() {
                         variantId: item.variantId,
                         quantity: item.quantity,
                     }).unwrap();
-                } catch (err) {
+                } catch {
                     // individual item failures are non-fatal
                 }
             }
@@ -487,8 +501,8 @@ function CheckoutPageContent() {
             toast.success("Order placed successfully! 🎉", { id: "guest-checkout" });
             // router.push("/products");
             setIsSuccessModalOpen(true);
-        } catch (err: any) {
-            toast.error(err?.data?.message || "Failed to place order", {
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, "Failed to place order"), {
                 id: "guest-checkout",
             });
         }
@@ -761,10 +775,8 @@ function CheckoutPageContent() {
                                     <div className="mt-5 p-5 rounded-[1.5rem] bg-orange-50 border border-orange-100 shadow-sm relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 w-20 h-20 bg-[#B5451B]/5 rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-700" />
                                         <p className="text-[11px] text-gray-700 leading-relaxed relative z-10">
-                                            <span className="font-black text-[#B5451B] uppercase tracking-wider block mb-1">Account Creation</span>
-                                            We&apos;ll create an account for you using your email.
-                                            <span className="font-bold text-[#B5451B] block mt-1">Default Password: 123456</span>
-                                            You can login later to track orders and manage your profile.
+                                            <span className="font-black text-[#B5451B] uppercase tracking-wider block mb-1">Guest Checkout</span>
+                                            Your details are used only to process this order. Create an account separately to manage future orders online.
                                         </p>
                                     </div>
                                 )}

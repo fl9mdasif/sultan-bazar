@@ -30,6 +30,7 @@ export interface TUser {
   password: string;
   profilePicture?: string;
   role: 'user' | 'admin' | 'superAdmin';
+  isGuest?: boolean;
   isBlocked?: boolean;
   passwordChangedAt?: Date;
   savedAddresses?: TSavedAddress[];

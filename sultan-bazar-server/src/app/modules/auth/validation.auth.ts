@@ -29,6 +29,14 @@ const userRegistrationValidation = z.object({
   }),
 });
 
+const guestCheckoutValidationSchema = z.object({
+  body: z.object({
+    email: z.string().email(),
+    fullName: z.string().trim().min(1).max(100),
+    phone: z.string().trim().min(1).max(30),
+  }),
+});
+
 // const refreshTokenValidationSchema = z.object({
 //   cookies: z.object({
 //     refreshToken: z.string({
@@ -41,5 +49,6 @@ export const authValidations = {
   userRegistrationValidation,
   loginValidationSchema,
   changePasswordValidationSchema,
+  guestCheckoutValidationSchema,
   // refreshTokenValidationSchema,
 };

@@ -38,6 +38,7 @@ const userSchema = new Schema<TUser, UserModel>(
     },
 
     isBlocked: { type: Boolean, default: false },
+    isGuest: { type: Boolean, default: false },
 
     passwordChangedAt: { type: Date },
 
