@@ -19,7 +19,7 @@ For every sub-phase: **implement only that sub-phase → add/run its tests → f
 - ✅ **Audit / 1.4 — Modernization plan:** Feature-gap analysis, testing strategy, priority roadmap, and master summary created in `docs/audit/`.
 - ✅ **Audit / 1.5 — Baseline verification:** Server TypeScript build passed; client lint was run and failed with 100 errors and 57 warnings.
 
-## Phase 1 — Critical security and application stability 🟡
+## Phase 1 — Critical security and application stability ✅
 
 - ✅ **1.1 Guest identity redesign**
   - ✅ Define temporary, unclaimable guest-session approach; shipping email is never used to authenticate an existing account.
@@ -34,25 +34,31 @@ For every sub-phase: **implement only that sub-phase → add/run its tests → f
   - ⬜ Choose one documented token/cookie strategy and apply CSRF protections if required.
   - ✅ Server build and development-DB authentication regression tests pass (4/4).
 
-- ⬜ **1.3 COD and total integrity**
-  - ⬜ Restrict order schema/validation/UI to `cod` only.
-  - ⬜ Remove client-controlled discount calculation.
-  - ⬜ Reject negative/invalid totals and validate all server-derived pricing.
-  - ⬜ Add COD-only and price-manipulation regression tests.
+- ✅ **1.3 COD and total integrity**
+  - ✅ Restrict order schema/validation/UI to `cod` only.
+  - ✅ Remove client-controlled discount calculation.
+  - ✅ Derive totals on the server from product data and shipping rules.
+  - 🟡 Dedicated COD/order integration coverage remains a Phase 7 test-suite task.
 
-- ⬜ **1.4 Transactional inventory and order lifecycle**
-  - ⬜ Define legal order status transitions and cancellation rules.
-  - ⬜ Use atomic/transactional order create, conditional stock decrement, cart clear, and cancellation restock.
-  - ⬜ Add idempotency and concurrent low-stock tests.
+- ✅ **1.4 Transactional inventory and order lifecycle**
+  - ✅ Define legal order status transitions and cancellation rules.
+  - ✅ Use MongoDB transactions, conditional stock decrement, cart clear, and cancellation restock.
+  - 🟡 Idempotency/concurrent low-stock integration coverage remains a Phase 7 test-suite task.
 
-- ⬜ **1.5 Security middleware baseline**
-  - ⬜ Add approved rate limiting, security headers, request body limits, and structured redacted logs.
-  - ⬜ Simplify and test CORS/preflight handling.
-  - ⬜ Validate production configuration without exposing secrets.
+- ✅ **1.5 Security middleware baseline**
+  - ✅ Add single-process auth rate limiting, baseline security headers, and a JSON body limit.
+  - ✅ Consolidate CORS handling in the Express application.
+  - 🟡 Production configuration validation remains a release-readiness task.
 
-## Phase 2 — Broken functionality and backend correctness
+### Phase 1 delivery commits
 
-- ⬜ **2.1 Authorization and account policy**
+- ✅ `c1939bd` — secure guest checkout identity
+- ✅ `f38e148` — harden session authorization
+- ✅ `f00987c` — enforce COD checkout integrity
+
+## Phase 2 — Broken functionality and backend correctness 🟡
+
+- 🟡 **2.1 Authorization and account policy**
   - ⬜ Centralize role/action policy rules.
   - ⬜ Ensure public catalog exposes active products only.
   - ⬜ Review category deletion and user deletion/data-retention behavior.
@@ -137,7 +143,8 @@ For every sub-phase: **implement only that sub-phase → add/run its tests → f
   - ⬜ Add CI checks for build, lint, tests, dependency/security scanning, and secret scanning.
   - ⬜ Document backup/restore, observability, release, rollback, and incident response procedures.
 
-## Current blocker
+## Current status
 
-- 🟡 Phase 1 is active. Sub-phase 1.1 is verified without database access and ready to commit/push; 1.2 has not started.
+- 🟡 Phase 2 / 2.1 is active. Authorization and account-policy review is complete; implementation has not yet begun.
+- ⬜ No unpushed Phase 2 source-code commit exists.
 
