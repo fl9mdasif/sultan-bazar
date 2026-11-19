@@ -40,7 +40,7 @@ export type TUserRole = keyof typeof USER_ROLE;
 export interface UserModel extends Model<TUser> {
   //instance methods for checking if the user exist
   // eslint-disable-next-line no-unused-vars
-  isUserExists(username: string): Promise<TUser>;
+  isUserExists(email: string): Promise<TUser | null>;
   //instance methods for checking if passwords are matched
   isPasswordMatched(
     // eslint-disable-next-line no-unused-vars

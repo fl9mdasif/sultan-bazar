@@ -1,4 +1,5 @@
 import httpStatus from 'http-status';
+import AppError from '../../errors/AppErrors';
 import catchAsync from '../../utils/catchAsync';
 import { response } from '../../utils/sendResponse';
 import { authServices } from './service.auth';
@@ -116,17 +117,17 @@ const refreshToken = catchAsync(async (req, res) => {
 
   // const refreshToken = localStorage.getItem('refreshToken') as string | null;
 
-  if (refreshToken) {
-    // console.log('r', refreshToken);
-    const result = await authServices.refreshToken(refreshToken);
-
-    response.createSendResponse(res, {
-      statusCode: httpStatus.OK,
-      success: true,
-      message: 'Refresh token is retrieved successfully!',
-      data: result,
-    });
+  if (!refreshToken) {
+    throw new AppError(httpStatus.UNAUTHORIZED, 'Refresh token is required', 'Unauthorized');
   }
+
+  const result = await authServices.refreshToken(refreshToken);
+  response.createSendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'Refresh token is retrieved successfully!',
+    data: result,
+  });
 });
 
 export const authControllers = {

@@ -9,7 +9,7 @@ import bcrypt from 'bcrypt';
 import { createToken, verifyToken } from './utils.auth';
 import { JwtPayload } from 'jsonwebtoken';
 
-const registerUser = async (payload: TUser) => User.create(payload);
+const registerUser = async (payload: TUser) => User.create({ ...payload, role: 'user', isGuest: false });
 
 // A shipping email is never used to find or authenticate an existing account.
 const guestCheckout = async (_email: string, _fullName: string, phone: string) => {
@@ -25,19 +25,20 @@ const guestCheckout = async (_email: string, _fullName: string, phone: string) =
 
   const jwtPayload: any = { _id: user._id as string, username: user.username, email: user.email, role: user.role };
   const accessToken = createToken(jwtPayload, config.jwt_access_secret as string, config.jwt_access_expires_in as string);
-  const refreshToken = createToken(jwtPayload, config.jwt_access_secret as string, config.jwt_access_expires_in as string);
+  const refreshToken = createToken(jwtPayload, config.jwt_refresh_secret as string, config.jwt_refresh_expires_in as string);
   return { accessToken, refreshToken, user: jwtPayload };
 };
 
 const loginUser = async (payload: TLoginUser) => {
   const user = await User.isUserExists(payload.email);
   if (!user) throw new AppError(httpStatus.NOT_FOUND, '', 'This user is not found');
+  if (user.isBlocked) throw new AppError(httpStatus.FORBIDDEN, 'This account is blocked', 'Account blocked');
   if (!(await User.isPasswordMatched(payload.password, user.password))) {
     throw new AppError(httpStatus.FORBIDDEN, `Password of '${user.role}' does not match`, 'Invalid password');
   }
   const jwtPayload: any = { _id: user._id as string, username: user.username, email: user.email, role: user.role };
   const accessToken = createToken(jwtPayload, config.jwt_access_secret as string, config.jwt_access_expires_in as string);
-  const refreshToken = createToken(jwtPayload, config.jwt_access_secret as string, config.jwt_access_expires_in as string);
+  const refreshToken = createToken(jwtPayload, config.jwt_refresh_secret as string, config.jwt_refresh_expires_in as string);
   return { data: { jwtPayload }, accessToken, refreshToken };
 };
 
@@ -56,13 +57,14 @@ const changePassword = async (userData: JwtPayload, payload: { oldPassword: stri
 };
 
 const refreshToken = async (token: string) => {
-  const decoded = verifyToken(token, config.jwt_access_secret as string) as JwtPayload;
-  const user = await User.isUserExists(decoded.username as string);
+  const decoded = verifyToken(token, config.jwt_refresh_secret as string) as JwtPayload;
+  const user = await User.isUserExists(decoded.email as string);
   if (!user) throw new AppError(httpStatus.NOT_FOUND, 'This user is not found');
+  if (user.isBlocked) throw new AppError(httpStatus.FORBIDDEN, 'This account is blocked', 'Account blocked');
   if (user.passwordChangedAt && User.isJWTIssuedBeforePasswordChanged(user.passwordChangedAt, decoded.iat as number)) {
     throw new AppError(httpStatus.UNAUTHORIZED, 'You are not authorized');
   }
-  const jwtPayload: any = { username: user.username, role: user.role };
+  const jwtPayload: any = { _id: user._id as string, username: user.username, email: user.email, role: user.role };
   const accessToken = createToken(jwtPayload, config.jwt_access_secret as string, config.jwt_access_expires_in as string);
   return { accessToken };
 };

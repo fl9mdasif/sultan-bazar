@@ -9,7 +9,10 @@ import { TUserRole } from '../modules/auth/interface.auth';
 
 const auth = (...requiredRoles: TUserRole[]) => {
   return catchAsync(async (req: Request, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization;
+    const authorization = req.headers.authorization;
+    const token = authorization?.startsWith('Bearer ')
+      ? authorization.slice('Bearer '.length)
+      : authorization;
 
     // checking if the token is missing
     if (!token) {
@@ -26,7 +29,7 @@ const auth = (...requiredRoles: TUserRole[]) => {
       config.jwt_access_secret as string,
     ) as JwtPayload;
     // console.log('auth middleware', decoded);
-    const { role, username, email, iat } = decoded;
+    const { email, iat } = decoded;
 
     // checking if the user is exist
     const user = await User.isUserExists(email);
@@ -37,6 +40,10 @@ const auth = (...requiredRoles: TUserRole[]) => {
         'This User is not found -auth middleware !',
         'No user found with the id',
       );
+    }
+
+    if (user.isBlocked) {
+      throw new AppError(httpStatus.FORBIDDEN, 'This account is blocked', 'Account blocked');
     }
 
     // check if password update time
@@ -54,15 +61,15 @@ const auth = (...requiredRoles: TUserRole[]) => {
       );
     }
 
-    if (requiredRoles && !requiredRoles.includes(role)) {
+    if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
       throw new AppError(
         httpStatus.UNAUTHORIZED,
-        `'${role}' is are not authorized`,
+        `'${user.role}' is not authorized`,
         'You do not have the necessary permissions to access this resource.',
       );
     }
 
-    req.user = decoded as JwtPayload;
+    req.user = { ...decoded, role: user.role, email: user.email, _id: user._id } as JwtPayload;
     next();
   });
 };

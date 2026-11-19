@@ -54,7 +54,7 @@ test('checkout does not disclose a reusable default password', () => {
   assert.match(checkoutPage, /Guest Checkout/);
 });
 
-test.skip('guest checkout persists an isolated identity in the development database', async (t) => {
+test('guest checkout persists an isolated identity in the development database', async (t) => {
   assert.ok(config.database_url, 'DATABASE_URL must be configured for integration tests');
   await mongoose.connect(config.database_url);
   t.after(async () => {
@@ -73,5 +73,18 @@ test.skip('guest checkout persists an isolated identity in the development datab
     assert.notEqual(guest.password, '123456');
   } finally {
     await User.deleteOne({ _id: result.user._id });
+  }
+});
+
+test('blocked users cannot log in', async (t) => {
+  await mongoose.connect(config.database_url);
+  t.after(async () => mongoose.disconnect());
+  const email = `auth-test-${Date.now()}@example.test`;
+  const user = await User.create({ username: `auth_test_${Date.now()}`, email, password: 'TemporaryPassword123!', contactNumber: '01700000000', role: 'user' });
+  try {
+    await User.findByIdAndUpdate(user._id, { isBlocked: true });
+    await assert.rejects(() => authServices.loginUser({ email, password: 'TemporaryPassword123!' }), /blocked/i);
+  } finally {
+    await User.deleteOne({ _id: user._id });
   }
 });

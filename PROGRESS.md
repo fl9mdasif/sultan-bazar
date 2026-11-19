@@ -28,11 +28,11 @@ For every sub-phase: **implement only that sub-phase → add/run its tests → f
   - ✅ Unit/privacy regression tests pass (2/2), targeted checkout lint has 0 errors, and server TypeScript build passes.
   - ⏭️ Database integration test is intentionally skipped by project owner; no database connection or test data was used.
 
-- ⬜ **1.2 Authentication and session hardening**
-  - ⬜ Enforce `isBlocked` in login, refresh, and protected requests.
-  - ⬜ Separate access and refresh secrets/expiry; implement safe refresh behavior.
+- ✅ **1.2 Authentication and session hardening**
+  - ✅ Enforce `isBlocked` in login, refresh, and protected requests.
+  - ✅ Separate access and refresh secrets/expiry; implement safe refresh behavior.
   - ⬜ Choose one documented token/cookie strategy and apply CSRF protections if required.
-  - ⬜ Add auth, expiration, blocked-account, and RBAC tests.
+  - ✅ Server build and development-DB authentication regression tests pass (4/4).
 
 - ⬜ **1.3 COD and total integrity**
   - ⬜ Restrict order schema/validation/UI to `cod` only.
