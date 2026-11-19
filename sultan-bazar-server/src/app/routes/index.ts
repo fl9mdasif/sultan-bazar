@@ -5,6 +5,7 @@ import { productRoutes } from '../modules/product/router.product';
 import { orderRoutes } from '../modules/order/route.order';
 import { userRoutes } from '../modules/user/route.user';
 import { cartRoutes } from '../modules/cart/route.cart';
+import { authRateLimit } from '../middlewares/authRateLimit';
 
 const router = Router();
 
@@ -35,6 +36,12 @@ const moduleRoute = [
   },
 ];
 
-moduleRoute.forEach((routeObj) => router.use(routeObj.path, routeObj.route));
+moduleRoute.forEach((routeObj) => {
+  if (routeObj.path === '/auth') {
+    router.use(routeObj.path, authRateLimit, routeObj.route);
+    return;
+  }
+  router.use(routeObj.path, routeObj.route);
+});
 
 export default router;

@@ -24,10 +24,9 @@ const placeOrderValidationSchema = z.object({
             .array(orderItemSchema)
             .min(1, { message: 'At least one item is required' }),
         shippingAddress: shippingAddressSchema,
-        paymentMethod: z.enum(['cod', 'bkash', 'nagad', 'card', 'bank'], {
-            message: 'Invalid payment method',
+        paymentMethod: z.literal('cod', {
+            message: 'Cash on Delivery is the only supported payment method',
         }),
-        discount: z.number().min(0).optional().default(0),
         note: z.string().optional(),
     }),
 });
@@ -49,7 +48,6 @@ const updatePaymentStatusValidationSchema = z.object({
         paymentStatus: z.enum(['pending', 'paid', 'failed', 'refunded'], {
             message: 'Invalid payment status',
         }),
-        transactionId: z.string().optional(),
     }),
 });
 

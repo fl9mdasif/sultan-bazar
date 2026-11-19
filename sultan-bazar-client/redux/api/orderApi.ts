@@ -66,7 +66,7 @@ const orderApi = baseApi.injectEndpoints({
             query: ({ id, data }) => ({
                 url: `/orders/${id}/payment-status`,
                 method: "PATCH",
-                data, // { paymentStatus: "paid", transactionId: "..." }
+                data, // { paymentStatus: "paid" }
             }),
             invalidatesTags: [tagTypes.orders],
 

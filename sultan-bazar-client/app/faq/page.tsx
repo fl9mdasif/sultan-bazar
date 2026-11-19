@@ -18,7 +18,7 @@ const FAQS = [
     },
     {
         question: "What payment methods do you accept?",
-        answer: "We accept Cash on Delivery (COD), bKash, Nagad, and standard Credit/Debit cards."
+        answer: "We accept Cash on Delivery (COD) only."
     },
     {
         question: "Are your products 100% natural?",

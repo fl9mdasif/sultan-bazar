@@ -151,7 +151,7 @@ export default function Footer() {
                     {/* Payment icons */}
                     <div className="flex items-center gap-3">
                         <span className="text-xs text-gray-500 mr-1">We accept:</span>
-                        {["💳 bKash", "💰 Nagad", "🏦 Cash on Delivery"].map((p) => (
+                        {["🏦 Cash on Delivery"].map((p) => (
                             <span
                                 key={p}
                                 className="text-xs font-medium px-2.5 py-1 rounded-full bg-white/5 border border-white/5 text-gray-400"

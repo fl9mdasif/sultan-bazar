@@ -10,10 +10,6 @@ export const ORDER_STATUS = {
 
 export const PAYMENT_METHOD = {
     cod: 'cod',
-    bkash: 'bkash',
-    nagad: 'nagad',
-    card: 'card',
-    bank: 'bank',
 } as const;
 
 export const PAYMENT_STATUS = {

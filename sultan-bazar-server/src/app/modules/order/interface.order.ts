@@ -1,7 +1,7 @@
 import { Document, Model, Types } from 'mongoose';
 
 // ── Enums ─────────────────────────────────────────────────────────────────────
-export type TPaymentMethod = 'cod' | 'bkash' | 'nagad' | 'card' | 'bank';
+export type TPaymentMethod = 'cod';
 export type TPaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded';
 export type TOrderStatus =
     | 'pending'
@@ -53,10 +53,8 @@ export interface TOrder {
     shippingAddress: TShippingAddress;
     paymentMethod: TPaymentMethod;
     paymentStatus?: TPaymentStatus;
-    transactionId?: string;
     subtotal: number;
     shippingCharge?: number;
-    discount?: number;
     totalAmount: number;
     orderStatus?: TOrderStatus;
     statusHistory: TStatusHistoryEntry[];

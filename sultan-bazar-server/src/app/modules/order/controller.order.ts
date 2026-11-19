@@ -72,11 +72,10 @@ const updateOrderStatus = catchAsync(async (req, res) => {
 
 // PATCH /api/orders/:orderId/payment-status  — admin updates payment status
 const updatePaymentStatus = catchAsync(async (req, res) => {
-    const { paymentStatus, transactionId } = req.body;
+    const { paymentStatus } = req.body;
     const result = await orderServices.updatePaymentStatus(
         req.params.orderId,
         paymentStatus,
-        transactionId,
     );
 
     response.createSendResponse(res, {

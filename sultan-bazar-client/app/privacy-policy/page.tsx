@@ -67,7 +67,7 @@ export default function PrivacyPolicyPage() {
                         </div>
                         <div className="space-y-4 text-gray-600 leading-relaxed">
                             <p>
-                                We take the security of your personal information seriously and use industry-standard measures to protect it. All payment transactions are encrypted and processed through secure third-party gateways. We do not store your credit card details on our servers.
+                                We take the security of your personal information seriously and use industry-standard measures to protect it. Sultan Bazar currently supports Cash on Delivery only and does not process card payment details.
                             </p>
                             <p>
                                 While we strive to protect your data, no method of transmission over the internet or electronic storage is 100% secure. Therefore, we cannot guarantee its absolute security.
