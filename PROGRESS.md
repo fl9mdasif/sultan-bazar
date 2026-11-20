@@ -143,7 +143,20 @@ For every sub-phase: **implement only that sub-phase → add/run its tests → f
   - ⬜ Add CI checks for build, lint, tests, dependency/security scanning, and secret scanning.
   - ⬜ Document backup/restore, observability, release, rollback, and incident response procedures.
 
-## Current status
+## Latest local update
+
+- Phase 2 / 2.1 implementation is in progress: centralized role/action policy, protected admin catalog endpoints, public active-only catalog queries, and deletion safeguards have been added locally.
+- Verification: server TypeScript build and role-policy unit tests pass (3/3). Targeted admin-page lint remains blocked by 8 pre-existing errors in those pages; no new API-slice lint errors were introduced.
+
+## Phase 2 delivery
+
+- ✅ **2.1 Authorization and account policy:** Centralized role/action policy, active-only public catalog, protected admin catalog APIs, IDOR-aware order access, category-in-use protection, and user-order retention safeguards.
+- ✅ **2.2 Reviews and ratings correctness:** Durable review model with one-review-per-user/product enforcement, delivered-order ownership checks, and aggregate rating recalculation.
+- ✅ **2.3 API and query contracts:** Bounded pagination/search, allowlisted catalog sorting, normalized documented contracts, and validated role updates.
+- ✅ **2.4 Media/upload architecture:** One S3 presigned-upload path, mounted API route, admin-only authorization, allowlisted image types, 5 MB size cap, and generated object keys.
+- ✅ Verification: server `npm run build`; targeted tests 5/5; targeted admin lint 0 errors; client `npm run build`.
+
+## Historical current status (before Phase 2 delivery)
 
 - 🟡 Phase 2 / 2.1 is active. Authorization and account-policy review is complete; implementation has not yet begun.
 - ⬜ No unpushed Phase 2 source-code commit exists.

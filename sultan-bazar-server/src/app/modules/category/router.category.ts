@@ -1,7 +1,6 @@
 import express from 'express';
-import auth from '../../middlewares/auth';
+import authorize from '../../middlewares/authorize';
 import validateRequest from '../../middlewares/validateRequest';
-import { USER_ROLE } from '../auth/const.auth';
 import { categoryControllers } from './controller.category';
 import { categoryValidations } from './validation.category';
 
@@ -10,13 +9,15 @@ const router = express.Router();
 // POST /api/categories  — admin / superAdmin only
 router.post(
   '/',
-  auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+  authorize('manageCategories'),
   validateRequest(categoryValidations.createCategoryValidationSchema),
   categoryControllers.createCategory,
 );
 
 // GET /api/categories  — public
 router.get('/', categoryControllers.getAllCategories);
+router.get('/admin', authorize('manageCategories'), categoryControllers.getAllCategoriesForAdmin);
+router.get('/admin/:categoryId', authorize('manageCategories'), categoryControllers.getSingleCategoryForAdmin);
 
 // GET /api/categories/:categoryId  — public (accepts ObjectId or slug)
 router.get('/:categoryId', categoryControllers.getSingleCategory);
@@ -24,7 +25,7 @@ router.get('/:categoryId', categoryControllers.getSingleCategory);
 // PATCH /api/categories/:categoryId  — admin / superAdmin only
 router.patch(
   '/:categoryId',
-  auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+  authorize('manageCategories'),
   validateRequest(categoryValidations.updateCategoryValidationSchema),
   categoryControllers.updateCategory,
 );
@@ -32,14 +33,14 @@ router.patch(
 // PATCH /api/categories/:categoryId/toggle-status  — admin / superAdmin only
 router.patch(
   '/:categoryId/toggle-status',
-  auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+  authorize('manageCategories'),
   categoryControllers.toggleCategoryStatus,
 );
 
 // DELETE /api/categories/:categoryId  — superAdmin only
 router.delete(
   '/:categoryId',
-  auth(USER_ROLE.superAdmin, USER_ROLE.admin),
+  authorize('manageCategories'),
   categoryControllers.deleteCategory,
 );
 

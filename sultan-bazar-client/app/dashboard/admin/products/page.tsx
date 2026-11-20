@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from "react";
 import {
-    useGetAllProductsQuery,
+    useGetAdminProductsQuery,
     useCreateProductMutation,
     useUpdateProductMutation,
     useDeleteProductMutation,
     useToggleFeaturedMutation,
 } from "@/redux/api/productApi";
-import { useGetAllCategoriesQuery } from "@/redux/api/categoryApi";
+import { useGetAdminCategoriesQuery } from "@/redux/api/categoryApi";
 import type { TVariant, TProduct, TCategory } from "@/types/common";
 import {
     Plus, Search, Pencil, Trash2, Star, Package,
@@ -54,7 +54,7 @@ export default function AdminProductsPage() {
     const [page, setPage] = useState(1);
     const limit = 15;
 
-    const { data, refetch, isLoading, isFetching } = useGetAllProductsQuery(
+    const { data, refetch, isLoading, isFetching } = useGetAdminProductsQuery(
         {
             search: search || undefined,
             status: statusFilter !== "all" ? statusFilter : undefined,
@@ -64,7 +64,7 @@ export default function AdminProductsPage() {
         },
         { refetchOnMountOrArgChange: true }
     );
-    const { data: categoryData } = useGetAllCategoriesQuery(undefined);
+    const { data: categoryData } = useGetAdminCategoriesQuery(undefined);
     const categoriesList: TCategory[] = (Array.isArray(categoryData) ? categoryData : categoryData?.data) || [];
 
     const [createProduct, { isLoading: creating }] = useCreateProductMutation();
@@ -88,7 +88,7 @@ export default function AdminProductsPage() {
         name: p.name,
         slug: p.slug,
         description: p.description,
-        category: typeof p.category === "string" ? p.category : (p.category as any)?._id || "",
+        category: typeof p.category === "string" ? p.category : p.category._id,
         thumbnail: p.thumbnail,
         tags: (p.tags ?? []).join(", "),
         status: p.status ?? "active",
@@ -326,7 +326,7 @@ export default function AdminProductsPage() {
                                         {/* Category */}
                                         <td className="px-4 py-4 text-gray-500 hidden md:table-cell text-xs">
                                             {typeof p.category === "object" && p.category !== null
-                                                ? (p.category as any).name
+                                                ? p.category.name
                                                 : String(p.category).slice(0, 8) + "…"}
                                         </td>
 

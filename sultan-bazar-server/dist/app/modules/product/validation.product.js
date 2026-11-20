@@ -79,8 +79,17 @@ const updateProductValidationSchema = zod_1.z.object({
         metaDescription: zod_1.z.string().optional(),
     }),
 });
+const addReviewValidationSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        rating: zod_1.z.number().int().min(1).max(5),
+        orderId: zod_1.z.string().length(24),
+        variantId: zod_1.z.string().length(24),
+        comment: zod_1.z.string().trim().max(1000).optional(),
+    }),
+});
 exports.productValidations = {
     createProductValidationSchema,
     updateProductValidationSchema,
     updateVariantValidationSchema,
+    addReviewValidationSchema,
 };

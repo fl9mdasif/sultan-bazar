@@ -17,8 +17,14 @@ const http_status_1 = __importDefault(require("http-status"));
 const AppErrors_1 = __importDefault(require("../../errors/AppErrors"));
 const model_product_1 = require("./model.product");
 const mongoose_1 = __importDefault(require("mongoose"));
+const model_order_1 = require("../order/model.order");
+const model_review_1 = require("../review/model.review");
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const isObjectId = (val) => /^[a-f\d]{24}$/i.test(val);
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const PRODUCT_SORTS = {
+    newest: { createdAt: -1 }, oldest: { createdAt: 1 }, priceAsc: { 'variants.price': 1 }, priceDesc: { 'variants.price': -1 }, rating: { rating: -1 },
+};
 // ── Create ───────────────────────────────────────────────────────────────────
 const createProduct = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     // Duplicate name check (case-insensitive)
@@ -37,13 +43,14 @@ const createProduct = (payload) => __awaiter(void 0, void 0, void 0, function* (
     return product.populate('category', 'name slug');
 });
 // ── Get All ──────────────────────────────────────────────────────────────────
-const getAllProducts = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const { search, category, status, isFeatured, minPrice, maxPrice, sort = '-createdAt', page = 1, limit = 12, } = query;
+const getAllProducts = (query_1, ...args_1) => __awaiter(void 0, [query_1, ...args_1], void 0, function* (query, includeNonActive = false) {
+    var _a;
+    const { search, category, status, isFeatured, minPrice, maxPrice, sort = 'newest', page = 1, limit = 12, } = query;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filter = {};
+    const filter = includeNonActive ? {} : { status: 'active' };
     // Improved search (substring matching)
     if (search) {
-        const searchTerm = search;
+        const searchTerm = escapeRegex(String(search)).slice(0, 100);
         filter.$or = [
             { name: { $regex: searchTerm, $options: 'i' } },
             { tags: { $regex: searchTerm, $options: 'i' } },
@@ -52,7 +59,7 @@ const getAllProducts = (query) => __awaiter(void 0, void 0, void 0, function* ()
     }
     if (category)
         filter.category = category;
-    if (status)
+    if (includeNonActive && status)
         filter.status = status;
     if (isFeatured !== undefined)
         filter.isFeatured = isFeatured === 'true' || isFeatured === true;
@@ -64,13 +71,13 @@ const getAllProducts = (query) => __awaiter(void 0, void 0, void 0, function* ()
         if (maxPrice)
             filter['variants.price'].$lte = Number(maxPrice);
     }
-    const pageNum = Number(page);
-    const limitNum = Number(limit);
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 12));
     const skip = (pageNum - 1) * limitNum;
     const [products, total] = yield Promise.all([
         model_product_1.Product.find(filter)
             .populate('category', 'name slug')
-            .sort(sort)
+            .sort((_a = PRODUCT_SORTS[String(sort)]) !== null && _a !== void 0 ? _a : PRODUCT_SORTS.newest)
             .skip(skip)
             .limit(limitNum),
         model_product_1.Product.countDocuments(filter),
@@ -86,10 +93,10 @@ const getAllProducts = (query) => __awaiter(void 0, void 0, void 0, function* ()
     };
 });
 // ── Get Single ───────────────────────────────────────────────────────────────
-const getSingleProduct = (idOrSlug) => __awaiter(void 0, void 0, void 0, function* () {
+const getSingleProduct = (idOrSlug_1, ...args_1) => __awaiter(void 0, [idOrSlug_1, ...args_1], void 0, function* (idOrSlug, includeNonActive = false) {
     const product = isObjectId(idOrSlug)
-        ? yield model_product_1.Product.findById(idOrSlug).populate('category', 'name slug')
-        : yield model_product_1.Product.findOne({ slug: idOrSlug }).populate('category', 'name slug');
+        ? yield model_product_1.Product.findOne(Object.assign({ _id: idOrSlug }, (includeNonActive ? {} : { status: 'active' }))).populate('category', 'name slug')
+        : yield model_product_1.Product.findOne(Object.assign({ slug: idOrSlug }, (includeNonActive ? {} : { status: 'active' }))).populate('category', 'name slug');
     if (!product) {
         throw new AppErrors_1.default(http_status_1.default.NOT_FOUND, 'Product not found', 'No product found with the given id or slug');
     }
@@ -161,32 +168,48 @@ const updateVariant = (productId, variantId, payload) => __awaiter(void 0, void 
     return product;
 });
 // ── Add Review Rating ────────────────────────────────────────────────────────
-const addReviewRating = (productId, rating, orderId, variantId) => __awaiter(void 0, void 0, void 0, function* () {
-    if (rating < 1 || rating > 5) {
-        throw new AppErrors_1.default(http_status_1.default.BAD_REQUEST, 'Rating must be between 1 and 5', 'Invalid rating');
-    }
+const addReviewRating = (productId, userId, input) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
     const product = yield model_product_1.Product.findById(productId);
-    if (!product) {
+    if (!product)
         throw new AppErrors_1.default(http_status_1.default.NOT_FOUND, 'Product not found', 'No product found');
+    const eligibleItem = {
+        product: new mongoose_1.default.Types.ObjectId(productId),
+        'variant.variantId': new mongoose_1.default.Types.ObjectId(input.variantId),
+        isReviewed: false,
+    };
+    const order = yield model_order_1.Order.findOne({
+        _id: input.orderId,
+        user: userId,
+        orderStatus: 'delivered',
+        items: { $elemMatch: eligibleItem },
+    });
+    if (!order) {
+        throw new AppErrors_1.default(http_status_1.default.FORBIDDEN, 'Only delivered items in your own orders can be reviewed once', 'Review not allowed');
     }
-    const currentTotalRating = (product.rating || 0) * (product.reviewCount || 0);
-    const newReviewCount = (product.reviewCount || 0) + 1;
-    const newAverageRating = (currentTotalRating + rating) / newReviewCount;
-    product.rating = Number(newAverageRating.toFixed(1));
-    product.reviewCount = newReviewCount;
-    yield product.save();
-    // If order details are provided, mark that specific item as reviewed
-    if (orderId && variantId) {
-        const { Order } = require('../order/model.order');
-        yield Order.findOneAndUpdate({
-            _id: orderId,
-            'items.product': productId,
-            'items.variant.variantId': variantId,
-        }, {
-            $set: { 'items.$.isReviewed': true },
+    try {
+        yield model_review_1.Review.create({
+            product: productId,
+            user: userId,
+            order: input.orderId,
+            variantId: input.variantId,
+            rating: input.rating,
+            comment: input.comment,
         });
     }
-    return product;
+    catch (error) {
+        if (typeof error === 'object' && error && 'code' in error && error.code === 11000) {
+            throw new AppErrors_1.default(http_status_1.default.CONFLICT, 'You have already reviewed this product', 'Duplicate review');
+        }
+        throw error;
+    }
+    const [aggregate] = yield model_review_1.Review.aggregate([
+        { $match: { product: new mongoose_1.default.Types.ObjectId(productId) } },
+        { $group: { _id: '$product', average: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+    const updated = yield model_product_1.Product.findByIdAndUpdate(productId, { rating: Number(((_a = aggregate === null || aggregate === void 0 ? void 0 : aggregate.average) !== null && _a !== void 0 ? _a : 0).toFixed(1)), reviewCount: (_b = aggregate === null || aggregate === void 0 ? void 0 : aggregate.count) !== null && _b !== void 0 ? _b : 0 }, { new: true });
+    yield model_order_1.Order.updateOne({ _id: order._id, user: userId, items: { $elemMatch: eligibleItem } }, { $set: { 'items.$.isReviewed': true } });
+    return updated;
 });
 exports.productServices = {
     createProduct,

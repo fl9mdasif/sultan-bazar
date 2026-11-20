@@ -20,6 +20,11 @@ const categoryApi = baseApi.injectEndpoints({
       providesTags: [tagTypes.categories]
     }),
 
+    getAdminCategories: build.query({
+      query: () => ({ url: "/categories/admin", method: "GET" }),
+      providesTags: [tagTypes.categories],
+    }),
+
     getSingleCategory: build.query({
       query: (id) => ({
         url: `/categories/${id}`,
@@ -61,6 +66,7 @@ const categoryApi = baseApi.injectEndpoints({
 export const {
   useCreateCategoryMutation,
   useGetAllCategoriesQuery,
+  useGetAdminCategoriesQuery,
   useGetSingleCategoryQuery,
   useUpdateCategoryMutation,
   useToggleCategoryStatusMutation,

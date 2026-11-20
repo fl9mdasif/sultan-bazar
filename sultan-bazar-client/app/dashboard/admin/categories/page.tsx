@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
-    useGetAllCategoriesQuery,
+    useGetAdminCategoriesQuery,
     useCreateCategoryMutation,
     useUpdateCategoryMutation,
     useDeleteCategoryMutation,
@@ -10,7 +10,7 @@ import {
 } from "@/redux/api/categoryApi";
 import {
     Plus, Search, Pencil, Trash2, Tags,
-    X, Loader2, AlertTriangle, Eye, EyeOff
+    X, Loader2, Eye, EyeOff
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -25,6 +25,12 @@ const emptyForm = () => ({
     order: 0,
 });
 
+type ApiError = { data?: { message?: string } };
+const getErrorMessage = (error: unknown, fallback: string) =>
+    typeof error === "object" && error !== null && "data" in error
+        ? ((error as ApiError).data?.message ?? fallback)
+        : fallback;
+
 import { CategoryModal, DeleteDialog } from "./category.modal";
 
 
@@ -32,7 +38,7 @@ import { CategoryModal, DeleteDialog } from "./category.modal";
 export default function AdminCategoriesPage() {
     const [search, setSearch] = useState("");
 
-    const { data, refetch, isLoading, isFetching } = useGetAllCategoriesQuery(undefined, { refetchOnMountOrArgChange: true });
+    const { data, refetch, isLoading, isFetching } = useGetAdminCategoriesQuery(undefined, { refetchOnMountOrArgChange: true });
 
     const [createCategory, { isLoading: creating }] = useCreateCategoryMutation();
     const [updateCategory, { isLoading: updating }] = useUpdateCategoryMutation();
@@ -58,7 +64,7 @@ export default function AdminCategoriesPage() {
         name: c.name,
         slug: c.slug,
         description: c.description || "",
-        thumbnail: (c as any).thumbnail || "",
+        thumbnail: c.thumbnail || "",
         isActive: c.isActive,
         order: c.order,
     });
@@ -74,7 +80,7 @@ export default function AdminCategoriesPage() {
                 if (form.name !== editTarget.name) changes.name = form.name;
                 if (form.slug !== editTarget.slug) changes.slug = form.slug;
                 if (form.description !== editTarget.description) changes.description = form.description;
-                if (form.thumbnail !== ((editTarget as any).thumbnail || "")) changes.thumbnail = form.thumbnail;
+                if (form.thumbnail !== (editTarget.thumbnail || "")) changes.thumbnail = form.thumbnail;
                 if (form.isActive !== editTarget.isActive) changes.isActive = form.isActive;
                 if (form.order !== editTarget.order) changes.order = form.order;
 
@@ -93,8 +99,8 @@ export default function AdminCategoriesPage() {
                 toast.success("Category created!");
             }
             setModalOpen(false);
-        } catch (error: any) {
-            toast.error(error?.data?.message || "Something went wrong. Please try again.");
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, "Something went wrong. Please try again."));
         }
     };
 
@@ -105,8 +111,8 @@ export default function AdminCategoriesPage() {
             toast.success("Category deleted.");
             refetch();
             setDeleteTarget(null);
-        } catch (error: any) {
-            toast.error(error?.data?.message || "Failed to delete category.");
+        } catch (error: unknown) {
+            toast.error(getErrorMessage(error, "Failed to delete category."));
         }
     };
 
@@ -190,8 +196,8 @@ export default function AdminCategoriesPage() {
                                         <td className="px-5 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden border border-gray-100">
-                                                    {(c as any).thumbnail ? (
-                                                        <img src={(c as any).thumbnail} alt={c.name} className="w-full h-full object-cover" />
+                                                    {c.thumbnail ? (
+                                                        <img src={c.thumbnail} alt={c.name} className="w-full h-full object-cover" />
                                                     ) : (
                                                         <Tags className="w-4 h-4 text-gray-300" />
                                                     )}

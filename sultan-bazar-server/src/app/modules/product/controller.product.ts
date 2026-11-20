@@ -27,6 +27,11 @@ const getAllProducts = catchAsync(async (req, res) => {
     });
 });
 
+const getAllProductsForAdmin = catchAsync(async (req, res) => {
+    const result = await productServices.getAllProducts(req.query, true);
+    response.createSendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Products retrieved successfully', data: result });
+});
+
 // Get single product by ObjectId or slug
 const getSingleProduct = catchAsync(async (req, res) => {
     const { productId } = req.params;
@@ -38,6 +43,11 @@ const getSingleProduct = catchAsync(async (req, res) => {
         message: 'Product retrieved successfully',
         data: result,
     });
+});
+
+const getSingleProductForAdmin = catchAsync(async (req, res) => {
+    const result = await productServices.getSingleProduct(req.params.productId, true);
+    response.createSendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Product retrieved successfully', data: result });
 });
 
 // Update product
@@ -100,13 +110,12 @@ const updateVariant = catchAsync(async (req, res) => {
 // Add Review Rating
 const addReviewRating = catchAsync(async (req, res) => {
     const { productId } = req.params;
-    const { rating, orderId, variantId } = req.body;
+    const { rating, orderId, variantId, comment } = req.body;
 
     const result = await productServices.addReviewRating(
         productId,
-        rating,
-        orderId,
-        variantId,
+        req.user._id,
+        { rating, orderId, variantId, comment },
     );
 
     response.createSendResponse(res, {
@@ -120,7 +129,9 @@ const addReviewRating = catchAsync(async (req, res) => {
 export const productControllers = {
     createProduct,
     getAllProducts,
+    getAllProductsForAdmin,
     getSingleProduct,
+    getSingleProductForAdmin,
     updateProduct,
     deleteProduct,
     toggleFeatured,

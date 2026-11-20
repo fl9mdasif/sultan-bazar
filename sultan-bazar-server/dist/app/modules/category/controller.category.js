@@ -37,6 +37,10 @@ const getAllCategories = (0, catchAsync_1.default)((req, res) => __awaiter(void 
         data: result,
     });
 }));
+const getAllCategoriesForAdmin = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield service_category_1.categoryServices.getAllCategories(req.query, true);
+    sendResponse_1.response.createSendResponse(res, { statusCode: http_status_1.default.OK, success: true, message: 'Categories retrieved successfully', data: result });
+}));
 // Get single category by id or slug
 const getSingleCategory = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { categoryId } = req.params;
@@ -47,6 +51,10 @@ const getSingleCategory = (0, catchAsync_1.default)((req, res) => __awaiter(void
         message: 'Category retrieved successfully',
         data: result,
     });
+}));
+const getSingleCategoryForAdmin = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield service_category_1.categoryServices.getSingleCategory(req.params.categoryId, true);
+    sendResponse_1.response.createSendResponse(res, { statusCode: http_status_1.default.OK, success: true, message: 'Category retrieved successfully', data: result });
 }));
 // Update category
 const updateCategory = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -84,7 +92,9 @@ const toggleCategoryStatus = (0, catchAsync_1.default)((req, res) => __awaiter(v
 exports.categoryControllers = {
     createCategory,
     getAllCategories,
+    getAllCategoriesForAdmin,
     getSingleCategory,
+    getSingleCategoryForAdmin,
     updateCategory,
     deleteCategory,
     toggleCategoryStatus,

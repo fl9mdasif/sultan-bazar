@@ -21,10 +21,16 @@ const userRegistrationValidation = zod_1.z.object({
         username: zod_1.z.string().min(1).max(50),
         email: zod_1.z.string().email(),
         password: zod_1.z.string().min(6).max(30),
-        role: zod_1.z.enum(['user', 'admin', 'superAdmin']).default('user'),
         contactNumber: zod_1.z.string(),
         profilePicture: zod_1.z.string().optional(),
         address: zod_1.z.string().optional(),
+    }),
+});
+const guestCheckoutValidationSchema = zod_1.z.object({
+    body: zod_1.z.object({
+        email: zod_1.z.string().email(),
+        fullName: zod_1.z.string().trim().min(1).max(100),
+        phone: zod_1.z.string().trim().min(1).max(30),
     }),
 });
 // const refreshTokenValidationSchema = z.object({
@@ -38,5 +44,6 @@ exports.authValidations = {
     userRegistrationValidation,
     loginValidationSchema: exports.loginValidationSchema,
     changePasswordValidationSchema,
+    guestCheckoutValidationSchema,
     // refreshTokenValidationSchema,
 };

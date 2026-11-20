@@ -1,7 +1,6 @@
 import express from 'express';
-import auth from '../../middlewares/auth';
+import authorize from '../../middlewares/authorize';
 import validateRequest from '../../middlewares/validateRequest';
-import { USER_ROLE } from '../auth/const.auth';
 import { productControllers } from './controller.product';
 import { productValidations } from './validation.product';
 
@@ -10,13 +9,15 @@ const router = express.Router();
 // POST /api/products  — admin / superAdmin
 router.post(
     '/',
-    auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageCatalog'),
     validateRequest(productValidations.createProductValidationSchema),
     productControllers.createProduct,
 );
 
 // GET /api/products  — public (supports ?search, ?category, ?status, ?isFeatured, ?minPrice, ?maxPrice, ?sort, ?page, ?limit)
 router.get('/', productControllers.getAllProducts);
+router.get('/admin', authorize('manageCatalog'), productControllers.getAllProductsForAdmin);
+router.get('/admin/:productId', authorize('manageCatalog'), productControllers.getSingleProductForAdmin);
 
 // GET /api/products/:productId  — public (accepts ObjectId or slug)
 router.get('/:productId', productControllers.getSingleProduct);
@@ -24,7 +25,7 @@ router.get('/:productId', productControllers.getSingleProduct);
 // PATCH /api/products/:productId  — admin / superAdmin
 router.patch(
     '/:productId',
-    auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageCatalog'),
     validateRequest(productValidations.updateProductValidationSchema),
     productControllers.updateProduct,
 );
@@ -32,14 +33,14 @@ router.patch(
 // PATCH /api/products/:productId/toggle-featured  — admin / superAdmin
 router.patch(
     '/:productId/toggle-featured',
-    auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageCatalog'),
     productControllers.toggleFeatured,
 );
 
 // PATCH /api/products/:productId/variants/:variantId  — admin / superAdmin
 router.patch(
     '/:productId/variants/:variantId',
-    auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageCatalog'),
     validateRequest(productValidations.updateVariantValidationSchema),
     productControllers.updateVariant,
 );
@@ -47,14 +48,15 @@ router.patch(
 // DELETE /api/products/:productId  — admin / superAdmin
 router.delete(
     '/:productId',
-    auth(USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageCatalog'),
     productControllers.deleteProduct,
 );
 
 // POST /api/products/:productId/review — user
 router.post(
     '/:productId/review',
-    auth(USER_ROLE.user),
+    authorize('placeOrder'),
+    validateRequest(productValidations.addReviewValidationSchema),
     productControllers.addReviewRating,
 );
 

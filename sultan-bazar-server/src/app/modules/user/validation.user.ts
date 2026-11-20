@@ -22,7 +22,12 @@ const updateAddressValidation = z.object({
     body: addressBaseSchema.partial(),   // every field optional on update
 });
 
+const updateUserRoleValidation = z.object({
+    body: z.object({ role: z.enum(['user', 'admin', 'superAdmin']) }),
+});
+
 export const userValidations = {
     addAddressValidation,
     updateAddressValidation,
+    updateUserRoleValidation,
 };

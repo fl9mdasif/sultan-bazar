@@ -72,8 +72,8 @@ const updateOrderStatus = (0, catchAsync_1.default)((req, res) => __awaiter(void
 }));
 // PATCH /api/orders/:orderId/payment-status  — admin updates payment status
 const updatePaymentStatus = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { paymentStatus, transactionId } = req.body;
-    const result = yield service_order_1.orderServices.updatePaymentStatus(req.params.orderId, paymentStatus, transactionId);
+    const { paymentStatus } = req.body;
+    const result = yield service_order_1.orderServices.updatePaymentStatus(req.params.orderId, paymentStatus);
     sendResponse_1.response.createSendResponse(res, {
         statusCode: http_status_1.default.OK,
         success: true,

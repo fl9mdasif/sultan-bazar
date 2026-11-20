@@ -1,5 +1,6 @@
 import httpStatus from 'http-status';
 import { User } from '../auth/model.auth';
+import { Order } from '../order/model.order';
 import { TSavedAddress } from '../auth/interface.auth';
 import AppError from '../../errors/AppErrors';
 
@@ -164,17 +165,20 @@ const getAllUsers = async (query: {
     page?: number;
     limit?: number;
 }) => {
-    const { search, role, page = 1, limit = 20 } = query;
+    const { search, role } = query;
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
     const filter: Record<string, unknown> = {};
 
     if (search) {
+        const escapedSearch = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0, 100);
         filter.$or = [
-            { username: { $regex: search, $options: 'i' } },
-            { email: { $regex: search, $options: 'i' } },
-            { contactNumber: { $regex: search, $options: 'i' } },
+            { username: { $regex: escapedSearch, $options: 'i' } },
+            { email: { $regex: escapedSearch, $options: 'i' } },
+            { contactNumber: { $regex: escapedSearch, $options: 'i' } },
         ];
     }
-    if (role) filter.role = role;
+    if (role && ['user', 'admin', 'superAdmin'].includes(role)) filter.role = role;
     if (query.isBlocked !== undefined) {
         filter.isBlocked = query.isBlocked === 'true' || query.isBlocked === true;
     }
@@ -238,6 +242,15 @@ const toggleBlockUser = async (targetId: string, callerId: string) => {
 const deleteUser = async (targetId: string, callerId: string) => {
     if (targetId === callerId) {
         throw new AppError(httpStatus.FORBIDDEN, 'Cannot delete yourself', 'Self-operation not allowed');
+    }
+
+    const orderCount = await Order.countDocuments({ user: targetId });
+    if (orderCount > 0) {
+        throw new AppError(
+            httpStatus.CONFLICT,
+            'Users with order history cannot be deleted. Block the account instead to preserve order records.',
+            'User has order history',
+        );
     }
 
     const user = await User.findByIdAndDelete(targetId);

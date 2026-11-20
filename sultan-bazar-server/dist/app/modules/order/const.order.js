@@ -12,10 +12,6 @@ exports.ORDER_STATUS = {
 };
 exports.PAYMENT_METHOD = {
     cod: 'cod',
-    bkash: 'bkash',
-    nagad: 'nagad',
-    card: 'card',
-    bank: 'bank',
 };
 exports.PAYMENT_STATUS = {
     pending: 'pending',

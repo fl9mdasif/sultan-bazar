@@ -25,6 +25,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authControllers = void 0;
 const http_status_1 = __importDefault(require("http-status"));
+const AppErrors_1 = __importDefault(require("../../errors/AppErrors"));
 const catchAsync_1 = __importDefault(require("../../utils/catchAsync"));
 const sendResponse_1 = require("../../utils/sendResponse");
 const service_auth_1 = require("./service.auth");
@@ -121,16 +122,16 @@ const refreshToken = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
     // Retrieve refreshToken
     const { refreshToken } = req.cookies;
     // const refreshToken = localStorage.getItem('refreshToken') as string | null;
-    if (refreshToken) {
-        // console.log('r', refreshToken);
-        const result = yield service_auth_1.authServices.refreshToken(refreshToken);
-        sendResponse_1.response.createSendResponse(res, {
-            statusCode: http_status_1.default.OK,
-            success: true,
-            message: 'Refresh token is retrieved successfully!',
-            data: result,
-        });
+    if (!refreshToken) {
+        throw new AppErrors_1.default(http_status_1.default.UNAUTHORIZED, 'Refresh token is required', 'Unauthorized');
     }
+    const result = yield service_auth_1.authServices.refreshToken(refreshToken);
+    sendResponse_1.response.createSendResponse(res, {
+        statusCode: http_status_1.default.OK,
+        success: true,
+        message: 'Refresh token is retrieved successfully!',
+        data: result,
+    });
 }));
 exports.authControllers = {
     loginUser,

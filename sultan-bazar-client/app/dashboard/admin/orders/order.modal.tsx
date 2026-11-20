@@ -156,12 +156,6 @@ export function OrderDetailsModal({
                                 <span>Shipping Charge</span>
                                 <span>৳{order.shippingCharge}</span>
                             </div>
-                            {(order.discount ?? 0) > 0 && (
-                                <div className="flex justify-between text-sm font-black text-green-600 uppercase tracking-widest">
-                                    <span>Discount Applied</span>
-                                    <span>-৳{order.discount}</span>
-                                </div>
-                            )}
                             <div className="flex justify-between items-center bg-orange-600 text-white p-6 rounded-2xl shadow-xl shadow-orange-100">
                                 <span className="text-xs font-black uppercase tracking-[0.2em]">Grand Total</span>
                                 <span className="text-3xl font-black tracking-tighter">৳{order.totalAmount}</span>
@@ -338,12 +332,6 @@ export function OrderDetailsModal({
                                                 <span className="uppercase tracking-widest text-[10px]">Shipping</span>
                                                 <span className="text-gray-900 font-black">৳{order.shippingCharge}</span>
                                             </div>
-                                            {(order.discount ?? 0) > 0 && (
-                                                <div className="flex justify-between text-sm font-black text-green-600 bg-green-50/50 p-2 rounded-lg">
-                                                    <span className="uppercase tracking-widest text-[10px]">Discount</span>
-                                                    <span>-৳{order.discount}</span>
-                                                </div>
-                                            )}
                                         </div>
 
                                         <div className="mt-8 bg-gradient-to-br from-gray-900 to-gray-800 p-8 rounded-[2rem] text-white shadow-xl shadow-gray-900/20 relative overflow-hidden group">

@@ -21,7 +21,11 @@ const addAddressValidation = zod_1.z.object({
 const updateAddressValidation = zod_1.z.object({
     body: addressBaseSchema.partial(), // every field optional on update
 });
+const updateUserRoleValidation = zod_1.z.object({
+    body: zod_1.z.object({ role: zod_1.z.enum(['user', 'admin', 'superAdmin']) }),
+});
 exports.userValidations = {
     addAddressValidation,
     updateAddressValidation,
+    updateUserRoleValidation,
 };

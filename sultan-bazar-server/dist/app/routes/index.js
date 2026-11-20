@@ -7,6 +7,8 @@ const router_product_1 = require("../modules/product/router.product");
 const route_order_1 = require("../modules/order/route.order");
 const route_user_1 = require("../modules/user/route.user");
 const route_cart_1 = require("../modules/cart/route.cart");
+const authRateLimit_1 = require("../middlewares/authRateLimit");
+const route_upload_1 = require("../modules/upload/route.upload");
 const router = (0, express_1.Router)();
 const moduleRoute = [
     {
@@ -33,6 +35,16 @@ const moduleRoute = [
         path: '/carts',
         route: route_cart_1.cartRoutes,
     },
+    {
+        path: '/uploads',
+        route: route_upload_1.ImageUploads,
+    },
 ];
-moduleRoute.forEach((routeObj) => router.use(routeObj.path, routeObj.route));
+moduleRoute.forEach((routeObj) => {
+    if (routeObj.path === '/auth') {
+        router.use(routeObj.path, authRateLimit_1.authRateLimit, routeObj.route);
+        return;
+    }
+    router.use(routeObj.path, routeObj.route);
+});
 exports.default = router;

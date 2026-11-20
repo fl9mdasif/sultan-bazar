@@ -27,6 +27,11 @@ const getAllCategories = catchAsync(async (req, res) => {
     });
 });
 
+const getAllCategoriesForAdmin = catchAsync(async (req, res) => {
+    const result = await categoryServices.getAllCategories(req.query, true);
+    response.createSendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Categories retrieved successfully', data: result });
+});
+
 // Get single category by id or slug
 const getSingleCategory = catchAsync(async (req, res) => {
     const { categoryId } = req.params;
@@ -38,6 +43,11 @@ const getSingleCategory = catchAsync(async (req, res) => {
         message: 'Category retrieved successfully',
         data: result,
     });
+});
+
+const getSingleCategoryForAdmin = catchAsync(async (req, res) => {
+    const result = await categoryServices.getSingleCategory(req.params.categoryId, true);
+    response.createSendResponse(res, { statusCode: httpStatus.OK, success: true, message: 'Category retrieved successfully', data: result });
 });
 
 // Update category
@@ -82,7 +92,9 @@ const toggleCategoryStatus = catchAsync(async (req, res) => {
 export const categoryControllers = {
     createCategory,
     getAllCategories,
+    getAllCategoriesForAdmin,
     getSingleCategory,
+    getSingleCategoryForAdmin,
     updateCategory,
     deleteCategory,
     toggleCategoryStatus,

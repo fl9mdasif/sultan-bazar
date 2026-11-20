@@ -6,6 +6,7 @@ import { orderRoutes } from '../modules/order/route.order';
 import { userRoutes } from '../modules/user/route.user';
 import { cartRoutes } from '../modules/cart/route.cart';
 import { authRateLimit } from '../middlewares/authRateLimit';
+import { ImageUploads } from '../modules/upload/route.upload';
 
 const router = Router();
 
@@ -33,6 +34,10 @@ const moduleRoute = [
   {
     path: '/carts',
     route: cartRoutes,
+  },
+  {
+    path: '/uploads',
+    route: ImageUploads,
   },
 ];
 

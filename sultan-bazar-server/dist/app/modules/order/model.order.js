@@ -33,7 +33,7 @@ const orderSchema = new mongoose_1.Schema({
     // Payment
     paymentMethod: {
         type: String,
-        enum: ['cod', 'bkash', 'nagad', 'card', 'bank'],
+        enum: ['cod'],
         required: true,
     },
     paymentStatus: {
@@ -41,11 +41,9 @@ const orderSchema = new mongoose_1.Schema({
         enum: ['pending', 'paid', 'failed', 'refunded'],
         default: 'pending',
     },
-    transactionId: { type: String }, // from bkash/nagad/card gateway
     // Pricing breakdown
     subtotal: { type: Number, required: true }, // sum of all items
     shippingCharge: { type: Number, default: 0 },
-    discount: { type: Number, default: 0 }, // coupon discount
     totalAmount: { type: Number, required: true }, // subtotal + shipping - discount
     // Order lifecycle
     orderStatus: {

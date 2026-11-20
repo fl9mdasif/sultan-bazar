@@ -2,6 +2,11 @@ import httpStatus from 'http-status';
 import AppError from '../../errors/AppErrors';
 import { TCategory } from './interface.category';
 import { Category } from './model.category';
+import { Product } from '../product/model.product';
+
+const CATEGORY_SORTS: Record<string, Record<string, 1 | -1>> = {
+  newest: { createdAt: -1 }, oldest: { createdAt: 1 }, nameAsc: { name: 1 }, nameDesc: { name: -1 },
+};
 
 // Create category
 const createCategory = async (payload: TCategory) => {
@@ -32,26 +37,26 @@ const createCategory = async (payload: TCategory) => {
 };
 
 // Get all categories
-const getAllCategories = async (query: Record<string, unknown>) => {
-  const { isActive, sort = 'order' } = query;
+const getAllCategories = async (query: Record<string, unknown>, includeInactive = false) => {
+  const { isActive, sort = 'nameAsc' } = query;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const filter: Record<string, any> = {};
-  if (isActive !== undefined) {
+  const filter: Record<string, any> = includeInactive ? {} : { isActive: true };
+  if (includeInactive && isActive !== undefined) {
     filter.isActive = isActive === 'true' || isActive === true;
   }
 
-  const categories = await Category.find(filter).sort(sort as string);
+  const categories = await Category.find(filter).sort(CATEGORY_SORTS[String(sort)] ?? CATEGORY_SORTS.nameAsc);
   return categories;
 };
 
 // Get single category by id or slug
-const getSingleCategory = async (idOrSlug: string) => {
+const getSingleCategory = async (idOrSlug: string, includeInactive = false) => {
   // Try ObjectId first, fall back to slug
   const isObjectId = /^[a-f\d]{24}$/i.test(idOrSlug);
   const category = isObjectId
-    ? await Category.findById(idOrSlug)
-    : await Category.findOne({ slug: idOrSlug });
+    ? await Category.findOne({ _id: idOrSlug, ...(includeInactive ? {} : { isActive: true }) })
+    : await Category.findOne({ slug: idOrSlug, ...(includeInactive ? {} : { isActive: true }) });
 
   if (!category) {
     throw new AppError(
@@ -115,6 +120,10 @@ const updateCategory = async (
 
 // Delete category
 const deleteCategory = async (id: string) => {
+  const productCount = await Product.countDocuments({ category: id });
+  if (productCount > 0) {
+    throw new AppError(httpStatus.CONFLICT, 'Move or archive products in this category before deleting it', 'Category is in use');
+  }
   const deleted = await Category.findByIdAndDelete(id);
   if (!deleted) {
     throw new AppError(

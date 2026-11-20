@@ -16,6 +16,10 @@ exports.categoryServices = void 0;
 const http_status_1 = __importDefault(require("http-status"));
 const AppErrors_1 = __importDefault(require("../../errors/AppErrors"));
 const model_category_1 = require("./model.category");
+const model_product_1 = require("../product/model.product");
+const CATEGORY_SORTS = {
+    newest: { createdAt: -1 }, oldest: { createdAt: 1 }, nameAsc: { name: 1 }, nameDesc: { name: -1 },
+};
 // Create category
 const createCategory = (payload) => __awaiter(void 0, void 0, void 0, function* () {
     // Check for duplicate name (case-insensitive)
@@ -34,23 +38,24 @@ const createCategory = (payload) => __awaiter(void 0, void 0, void 0, function* 
     return category;
 });
 // Get all categories
-const getAllCategories = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const { isActive, sort = 'order' } = query;
+const getAllCategories = (query_1, ...args_1) => __awaiter(void 0, [query_1, ...args_1], void 0, function* (query, includeInactive = false) {
+    var _a;
+    const { isActive, sort = 'nameAsc' } = query;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filter = {};
-    if (isActive !== undefined) {
+    const filter = includeInactive ? {} : { isActive: true };
+    if (includeInactive && isActive !== undefined) {
         filter.isActive = isActive === 'true' || isActive === true;
     }
-    const categories = yield model_category_1.Category.find(filter).sort(sort);
+    const categories = yield model_category_1.Category.find(filter).sort((_a = CATEGORY_SORTS[String(sort)]) !== null && _a !== void 0 ? _a : CATEGORY_SORTS.nameAsc);
     return categories;
 });
 // Get single category by id or slug
-const getSingleCategory = (idOrSlug) => __awaiter(void 0, void 0, void 0, function* () {
+const getSingleCategory = (idOrSlug_1, ...args_1) => __awaiter(void 0, [idOrSlug_1, ...args_1], void 0, function* (idOrSlug, includeInactive = false) {
     // Try ObjectId first, fall back to slug
     const isObjectId = /^[a-f\d]{24}$/i.test(idOrSlug);
     const category = isObjectId
-        ? yield model_category_1.Category.findById(idOrSlug)
-        : yield model_category_1.Category.findOne({ slug: idOrSlug });
+        ? yield model_category_1.Category.findOne(Object.assign({ _id: idOrSlug }, (includeInactive ? {} : { isActive: true })))
+        : yield model_category_1.Category.findOne(Object.assign({ slug: idOrSlug }, (includeInactive ? {} : { isActive: true })));
     if (!category) {
         throw new AppErrors_1.default(http_status_1.default.NOT_FOUND, 'Category not found', 'No category found with the given id or slug');
     }
@@ -89,6 +94,10 @@ const updateCategory = (id, payload) => __awaiter(void 0, void 0, void 0, functi
 });
 // Delete category
 const deleteCategory = (id) => __awaiter(void 0, void 0, void 0, function* () {
+    const productCount = yield model_product_1.Product.countDocuments({ category: id });
+    if (productCount > 0) {
+        throw new AppErrors_1.default(http_status_1.default.CONFLICT, 'Move or archive products in this category before deleting it', 'Category is in use');
+    }
     const deleted = yield model_category_1.Category.findByIdAndDelete(id);
     if (!deleted) {
         throw new AppErrors_1.default(http_status_1.default.NOT_FOUND, 'Category not found', 'No category found with the given id');

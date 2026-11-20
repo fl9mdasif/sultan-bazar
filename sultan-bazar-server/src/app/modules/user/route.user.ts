@@ -1,7 +1,6 @@
 import express from 'express';
-import auth from '../../middlewares/auth';
+import authorize from '../../middlewares/authorize';
 import validateRequest from '../../middlewares/validateRequest';
-import { USER_ROLE } from '../auth/const.auth';
 import { userControllers } from './controller.user';
 import { userValidations } from './validation.user';
 
@@ -12,14 +11,14 @@ const router = express.Router();
 // GET all saved addresses
 router.get(
     '/addresses',
-    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageOwnAccount'),
     userControllers.getAddresses,
 );
 
 // POST add a new address
 router.post(
     '/addresses',
-    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageOwnAccount'),
     validateRequest(userValidations.addAddressValidation),
     userControllers.addAddress,
 );
@@ -27,7 +26,7 @@ router.post(
 // PATCH update a specific address
 router.patch(
     '/addresses/:id',
-    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageOwnAccount'),
     validateRequest(userValidations.updateAddressValidation),
     userControllers.updateAddress,
 );
@@ -35,14 +34,14 @@ router.patch(
 // PATCH set an address as default
 router.patch(
     '/addresses/:id/default',
-    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageOwnAccount'),
     userControllers.setDefaultAddress,
 );
 
 // DELETE remove an address
 router.delete(
     '/addresses/:id',
-    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageOwnAccount'),
     userControllers.deleteAddress,
 );
 
@@ -51,7 +50,7 @@ router.delete(
 // GET  /api/v1/users          — list all users (search, role, page, limit)
 router.get(
     '/',
-    auth(USER_ROLE.superAdmin, USER_ROLE.admin),
+    authorize('listUsers'),
     userControllers.getAllUsers,
 );
 
@@ -60,42 +59,43 @@ router.get(
 // GET  /api/v1/users/me
 router.get(
     '/me',
-    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageOwnAccount'),
     userControllers.getMyProfile,
 );
 
 // PATCH /api/v1/users/me
 router.patch(
     '/me',
-    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageOwnAccount'),
     userControllers.updateProfile,
 );
 
 // POST /api/v1/users/me/change-password
 router.post(
     '/me/change-password',
-    auth(USER_ROLE.user, USER_ROLE.admin, USER_ROLE.superAdmin),
+    authorize('manageOwnAccount'),
     userControllers.changePassword,
 );
 
 // PATCH /api/v1/users/:id/role   — change a user's role
 router.patch(
     '/:id/role',
-    auth(USER_ROLE.superAdmin),
+    authorize('manageUserRoles'),
+    validateRequest(userValidations.updateUserRoleValidation),
     userControllers.updateUserRole,
 );
 
 // PATCH /api/v1/users/:id/block  — toggle block/unblock
 router.patch(
     '/:id/block',
-    auth(USER_ROLE.superAdmin),
+    authorize('manageUserBlocks'),
     userControllers.toggleBlockUser,
 );
 
 // DELETE /api/v1/users/:id       — permanently delete a user
 router.delete(
     '/:id',
-    auth(USER_ROLE.superAdmin),
+    authorize('deleteUsers'),
     userControllers.deleteUser,
 );
 

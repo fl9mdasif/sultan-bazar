@@ -37,6 +37,10 @@ const getAllProducts = (0, catchAsync_1.default)((req, res) => __awaiter(void 0,
         data: result,
     });
 }));
+const getAllProductsForAdmin = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield service_product_1.productServices.getAllProducts(req.query, true);
+    sendResponse_1.response.createSendResponse(res, { statusCode: http_status_1.default.OK, success: true, message: 'Products retrieved successfully', data: result });
+}));
 // Get single product by ObjectId or slug
 const getSingleProduct = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { productId } = req.params;
@@ -47,6 +51,10 @@ const getSingleProduct = (0, catchAsync_1.default)((req, res) => __awaiter(void 
         message: 'Product retrieved successfully',
         data: result,
     });
+}));
+const getSingleProductForAdmin = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield service_product_1.productServices.getSingleProduct(req.params.productId, true);
+    sendResponse_1.response.createSendResponse(res, { statusCode: http_status_1.default.OK, success: true, message: 'Product retrieved successfully', data: result });
 }));
 // Update product
 const updateProduct = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -95,8 +103,8 @@ const updateVariant = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
 // Add Review Rating
 const addReviewRating = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { productId } = req.params;
-    const { rating, orderId, variantId } = req.body;
-    const result = yield service_product_1.productServices.addReviewRating(productId, rating, orderId, variantId);
+    const { rating, orderId, variantId, comment } = req.body;
+    const result = yield service_product_1.productServices.addReviewRating(productId, req.user._id, { rating, orderId, variantId, comment });
     sendResponse_1.response.createSendResponse(res, {
         statusCode: http_status_1.default.OK,
         success: true,
@@ -107,7 +115,9 @@ const addReviewRating = (0, catchAsync_1.default)((req, res) => __awaiter(void 0
 exports.productControllers = {
     createProduct,
     getAllProducts,
+    getAllProductsForAdmin,
     getSingleProduct,
+    getSingleProductForAdmin,
     updateProduct,
     deleteProduct,
     toggleFeatured,

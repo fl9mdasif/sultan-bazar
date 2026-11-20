@@ -3,9 +3,15 @@ import AppError from '../../errors/AppErrors';
 import { TProduct } from './interface.product';
 import { Product } from './model.product';
 import mongoose from 'mongoose';
+import { Order } from '../order/model.order';
+import { Review } from '../review/model.review';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 const isObjectId = (val: string) => /^[a-f\d]{24}$/i.test(val);
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const PRODUCT_SORTS: Record<string, Record<string, 1 | -1>> = {
+    newest: { createdAt: -1 }, oldest: { createdAt: 1 }, priceAsc: { 'variants.price': 1 }, priceDesc: { 'variants.price': -1 }, rating: { rating: -1 },
+};
 
 // ── Create ───────────────────────────────────────────────────────────────────
 const createProduct = async (payload: TProduct) => {
@@ -36,7 +42,7 @@ const createProduct = async (payload: TProduct) => {
 };
 
 // ── Get All ──────────────────────────────────────────────────────────────────
-const getAllProducts = async (query: Record<string, unknown>) => {
+const getAllProducts = async (query: Record<string, unknown>, includeNonActive = false) => {
     const {
         search,
         category,
@@ -44,17 +50,17 @@ const getAllProducts = async (query: Record<string, unknown>) => {
         isFeatured,
         minPrice,
         maxPrice,
-        sort = '-createdAt',
+        sort = 'newest',
         page = 1,
         limit = 12,
     } = query;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const filter: Record<string, any> = {};
+    const filter: Record<string, any> = includeNonActive ? {} : { status: 'active' };
 
     // Improved search (substring matching)
     if (search) {
-        const searchTerm = search as string;
+        const searchTerm = escapeRegex(String(search)).slice(0, 100);
         filter.$or = [
             { name: { $regex: searchTerm, $options: 'i' } },
             { tags: { $regex: searchTerm, $options: 'i' } },
@@ -63,7 +69,7 @@ const getAllProducts = async (query: Record<string, unknown>) => {
     }
 
     if (category) filter.category = category;
-    if (status) filter.status = status;
+    if (includeNonActive && status) filter.status = status;
     if (isFeatured !== undefined)
         filter.isFeatured = isFeatured === 'true' || isFeatured === true;
 
@@ -74,14 +80,14 @@ const getAllProducts = async (query: Record<string, unknown>) => {
         if (maxPrice) filter['variants.price'].$lte = Number(maxPrice);
     }
 
-    const pageNum = Number(page);
-    const limitNum = Number(limit);
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 12));
     const skip = (pageNum - 1) * limitNum;
 
     const [products, total] = await Promise.all([
         Product.find(filter)
             .populate('category', 'name slug')
-            .sort(sort as string)
+            .sort(PRODUCT_SORTS[String(sort)] ?? PRODUCT_SORTS.newest)
             .skip(skip)
             .limit(limitNum),
         Product.countDocuments(filter),
@@ -99,10 +105,10 @@ const getAllProducts = async (query: Record<string, unknown>) => {
 };
 
 // ── Get Single ───────────────────────────────────────────────────────────────
-const getSingleProduct = async (idOrSlug: string) => {
+const getSingleProduct = async (idOrSlug: string, includeNonActive = false) => {
     const product = isObjectId(idOrSlug)
-        ? await Product.findById(idOrSlug).populate('category', 'name slug')
-        : await Product.findOne({ slug: idOrSlug }).populate('category', 'name slug');
+        ? await Product.findOne({ _id: idOrSlug, ...(includeNonActive ? {} : { status: 'active' }) }).populate('category', 'name slug')
+        : await Product.findOne({ slug: idOrSlug, ...(includeNonActive ? {} : { status: 'active' }) }).populate('category', 'name slug');
 
     if (!product) {
         throw new AppError(
@@ -223,44 +229,57 @@ const updateVariant = async (
 // ── Add Review Rating ────────────────────────────────────────────────────────
 const addReviewRating = async (
     productId: string,
-    rating: number,
-    orderId?: string,
-    variantId?: string,
+    userId: string,
+    input: { rating: number; orderId: string; variantId: string; comment?: string },
 ) => {
-    if (rating < 1 || rating > 5) {
-        throw new AppError(httpStatus.BAD_REQUEST, 'Rating must be between 1 and 5', 'Invalid rating');
-    }
-
     const product = await Product.findById(productId);
-    if (!product) {
-        throw new AppError(httpStatus.NOT_FOUND, 'Product not found', 'No product found');
+    if (!product) throw new AppError(httpStatus.NOT_FOUND, 'Product not found', 'No product found');
+
+    const eligibleItem = {
+        product: new mongoose.Types.ObjectId(productId),
+        'variant.variantId': new mongoose.Types.ObjectId(input.variantId),
+        isReviewed: false,
+    };
+    const order = await Order.findOne({
+        _id: input.orderId,
+        user: userId,
+        orderStatus: 'delivered',
+        items: { $elemMatch: eligibleItem },
+    });
+    if (!order) {
+        throw new AppError(httpStatus.FORBIDDEN, 'Only delivered items in your own orders can be reviewed once', 'Review not allowed');
     }
 
-    const currentTotalRating = (product.rating || 0) * (product.reviewCount || 0);
-    const newReviewCount = (product.reviewCount || 0) + 1;
-    const newAverageRating = (currentTotalRating + rating) / newReviewCount;
-
-    product.rating = Number(newAverageRating.toFixed(1));
-    product.reviewCount = newReviewCount;
-
-    await product.save();
-
-    // If order details are provided, mark that specific item as reviewed
-    if (orderId && variantId) {
-        const { Order } = require('../order/model.order');
-        await Order.findOneAndUpdate(
-            {
-                _id: orderId,
-                'items.product': productId,
-                'items.variant.variantId': variantId,
-            },
-            {
-                $set: { 'items.$.isReviewed': true },
-            },
-        );
+    try {
+        await Review.create({
+            product: productId,
+            user: userId,
+            order: input.orderId,
+            variantId: input.variantId,
+            rating: input.rating,
+            comment: input.comment,
+        });
+    } catch (error: unknown) {
+        if (typeof error === 'object' && error && 'code' in error && error.code === 11000) {
+            throw new AppError(httpStatus.CONFLICT, 'You have already reviewed this product', 'Duplicate review');
+        }
+        throw error;
     }
 
-    return product;
+    const [aggregate] = await Review.aggregate<{ average: number; count: number }>([
+        { $match: { product: new mongoose.Types.ObjectId(productId) } },
+        { $group: { _id: '$product', average: { $avg: '$rating' }, count: { $sum: 1 } } },
+    ]);
+    const updated = await Product.findByIdAndUpdate(
+        productId,
+        { rating: Number((aggregate?.average ?? 0).toFixed(1)), reviewCount: aggregate?.count ?? 0 },
+        { new: true },
+    );
+    await Order.updateOne(
+        { _id: order._id, user: userId, items: { $elemMatch: eligibleItem } },
+        { $set: { 'items.$.isReviewed': true } },
+    );
+    return updated;
 };
 
 export const productServices = {

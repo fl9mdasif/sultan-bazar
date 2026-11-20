@@ -14,6 +14,15 @@ const productApi = baseApi.injectEndpoints({
       providesTags: [tagTypes.products],
     }),
 
+    getAdminProducts: build.query({
+      query: (params?: Record<string, unknown>) => ({
+        url: "/products/admin",
+        method: "GET",
+        params,
+      }),
+      providesTags: [tagTypes.products],
+    }),
+
     // GET /products/:id
     getSingleProduct: build.query({
       query: (id: string) => ({
@@ -85,6 +94,7 @@ const productApi = baseApi.injectEndpoints({
 
 export const {
   useGetAllProductsQuery,
+  useGetAdminProductsQuery,
   useGetSingleProductQuery,
   useCreateProductMutation,
   useUpdateProductMutation,

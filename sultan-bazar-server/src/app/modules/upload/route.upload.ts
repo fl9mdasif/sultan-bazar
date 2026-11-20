@@ -1,5 +1,4 @@
-import auth from '../../middlewares/auth';
-import { USER_ROLE } from '../auth/const.auth';
+import authorize from '../../middlewares/authorize';
 import { generateUploadUrl } from './controller.upload';
 import { Router } from 'express';
 // import { generateUploadUrl } from '../controllers/upload.controller';
@@ -10,7 +9,7 @@ const router = Router();
 // This endpoint MUST be protected so only logged-in admins can use it
 router.post(
   '/generate-upload-url',
-  // auth(USER_ROLE.user, USER_ROLE.superAdmin) , // Apply your JWT verification middleware
+  authorize('manageCatalog'),
   generateUploadUrl
 );
 

@@ -48,6 +48,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.userServices = void 0;
 const http_status_1 = __importDefault(require("http-status"));
 const model_auth_1 = require("../auth/model.auth");
+const model_order_1 = require("../order/model.order");
 const AppErrors_1 = __importDefault(require("../../errors/AppErrors"));
 const MAX_SAVED_ADDRESSES = 5;
 // ── Get all saved addresses ────────────────────────────────────────────────────
@@ -148,16 +149,19 @@ const setDefaultAddress = (userId, addressId) => __awaiter(void 0, void 0, void 
 });
 // ── SUPERADMIN: Get all users (with search & pagination) ──────────────────────
 const getAllUsers = (query) => __awaiter(void 0, void 0, void 0, function* () {
-    const { search, role, page = 1, limit = 20 } = query;
+    const { search, role } = query;
+    const page = Math.max(1, Number(query.page) || 1);
+    const limit = Math.min(100, Math.max(1, Number(query.limit) || 20));
     const filter = {};
     if (search) {
+        const escapedSearch = String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&').slice(0, 100);
         filter.$or = [
-            { username: { $regex: search, $options: 'i' } },
-            { email: { $regex: search, $options: 'i' } },
-            { contactNumber: { $regex: search, $options: 'i' } },
+            { username: { $regex: escapedSearch, $options: 'i' } },
+            { email: { $regex: escapedSearch, $options: 'i' } },
+            { contactNumber: { $regex: escapedSearch, $options: 'i' } },
         ];
     }
-    if (role)
+    if (role && ['user', 'admin', 'superAdmin'].includes(role))
         filter.role = role;
     if (query.isBlocked !== undefined) {
         filter.isBlocked = query.isBlocked === 'true' || query.isBlocked === true;
@@ -202,6 +206,10 @@ const toggleBlockUser = (targetId, callerId) => __awaiter(void 0, void 0, void 0
 const deleteUser = (targetId, callerId) => __awaiter(void 0, void 0, void 0, function* () {
     if (targetId === callerId) {
         throw new AppErrors_1.default(http_status_1.default.FORBIDDEN, 'Cannot delete yourself', 'Self-operation not allowed');
+    }
+    const orderCount = yield model_order_1.Order.countDocuments({ user: targetId });
+    if (orderCount > 0) {
+        throw new AppErrors_1.default(http_status_1.default.CONFLICT, 'Users with order history cannot be deleted. Block the account instead to preserve order records.', 'User has order history');
     }
     const user = yield model_auth_1.User.findByIdAndDelete(targetId);
     if (!user)

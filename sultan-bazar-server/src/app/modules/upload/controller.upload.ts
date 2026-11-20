@@ -1,64 +1,50 @@
 import { Request, Response } from 'express';
-import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import httpStatus from 'http-status';
 import { v4 as uuidv4 } from 'uuid';
-import httpStatus from 'http-status'; // Or use numeric codes directly
+import AppError from '../../errors/AppErrors';
 
-// Initialize S3 Client (Make sure AWS env vars are loaded)
 const s3Client = new S3Client({
-  region: process.env.AWS_S3_REGION!,
+  region: process.env.AWS_S3_REGION,
   credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
   },
 });
 
+const ALLOWED_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
 export const generateUploadUrl = async (req: Request, res: Response) => {
   try {
-    const { filename, contentType } = req.body;
-
-    // Basic Validation
-    if (!filename || !contentType) {
-      return res.status(httpStatus.BAD_REQUEST).json({
-         success: false,
-         message: 'Filename and contentType are required'
-      });
+    const { filename, contentType, contentLength } = req.body as {
+      filename?: unknown;
+      contentType?: unknown;
+      contentLength?: unknown;
+    };
+    if (typeof filename !== 'string' || typeof contentType !== 'string' || typeof contentLength !== 'number') {
+      throw new AppError(httpStatus.BAD_REQUEST, 'filename, contentType, and contentLength are required', 'Invalid upload request');
+    }
+    if (!ALLOWED_IMAGE_TYPES.has(contentType) || contentLength < 1 || contentLength > MAX_IMAGE_BYTES) {
+      throw new AppError(httpStatus.BAD_REQUEST, 'Only JPEG, PNG, or WebP images up to 5 MB are allowed', 'Invalid upload file');
     }
 
-    // Sanitize filename and create unique key
-    const safeFilename = filename.replace(/[^a-zA-Z0-9.\-_]/g, '-'); // Replace unsafe characters
-    const uniqueKey = `uploads/images/${uuidv4()}-${safeFilename}`; // Define your folder structure
+    const bucket = process.env.AWS_S3_BUCKET_NAME;
+    const region = process.env.AWS_S3_REGION;
+    if (!bucket || !region) {
+      throw new AppError(httpStatus.SERVICE_UNAVAILABLE, 'Image uploads are not configured', 'Upload unavailable');
+    }
 
-    // Prepare S3 command
-    const command = new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET_NAME!,
-      Key: uniqueKey,
-      ContentType: contentType,
-      // ACL: 'public-read' // Optional: Uncomment if you want files public by default
-    });
-
-    // Generate the pre-signed URL (valid for 10 minutes)
+    const safeFilename = filename.replace(/[^a-zA-Z0-9.\-_]/g, '-').slice(-100);
+    const key = `uploads/images/${uuidv4()}-${safeFilename}`;
+    const command = new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType, ContentLength: contentLength });
     const uploadUrl = await getSignedUrl(s3Client, command, { expiresIn: 600 });
-
-    // Construct the final, permanent URL of the file
-    const fileUrl = `https://${process.env.AWS_S3_BUCKET_NAME}.s3.${process.env.AWS_S3_REGION}.amazonaws.com/${uniqueKey}`;
-
-    // Send successful response
-    return res.status(httpStatus.OK).json({
-      success: true,
-      message: 'Upload URL generated successfully',
-      data: {
-        uploadUrl: uploadUrl, // Temporary URL for PUT request
-        fileUrl: fileUrl,     // Permanent URL to save in DB
-      },
-    });
-
-  } catch (error: any) {
-    console.error("❌ Error generating S3 pre-signed URL:", error);
-    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({
-       success: false,
-       message: 'Failed to generate upload URL',
-       error: error.message
-    });
+    const fileUrl = `https://${bucket}.s3.${region}.amazonaws.com/${key}`;
+    return res.status(httpStatus.OK).json({ success: true, message: 'Upload URL generated successfully', data: { uploadUrl, fileUrl } });
+  } catch (error: unknown) {
+    if (error instanceof AppError) return res.status(error.statusCode).json({ success: false, message: error.message });
+    console.error('Image upload URL generation failed');
+    return res.status(httpStatus.INTERNAL_SERVER_ERROR).json({ success: false, message: 'Failed to generate upload URL' });
   }
 };

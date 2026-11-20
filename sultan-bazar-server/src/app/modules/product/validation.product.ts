@@ -82,8 +82,18 @@ const updateProductValidationSchema = z.object({
     }),
 });
 
+const addReviewValidationSchema = z.object({
+    body: z.object({
+        rating: z.number().int().min(1).max(5),
+        orderId: z.string().length(24),
+        variantId: z.string().length(24),
+        comment: z.string().trim().max(1000).optional(),
+    }),
+});
+
 export const productValidations = {
     createProductValidationSchema,
     updateProductValidationSchema,
     updateVariantValidationSchema,
+    addReviewValidationSchema,
 };
