@@ -102,9 +102,9 @@ For every sub-phase: **implement only that sub-phase → add/run its tests → f
 
 ## Phase 4 — Essential e-commerce functionality
 
-- ⬜ **4.1 Delivery zones and shipping rules**
-  - ⬜ Model districts/delivery areas and server-owned shipping rules.
-  - ⬜ Add admin configuration and checkout validation.
+- 🟡 **4.1 Delivery zones and shipping rules**
+  - 🟡 Model districts/delivery areas and server-owned shipping rules.
+  - 🟡 Add admin configuration and checkout validation.
 
 - ⬜ **4.2 Promotions**
   - ⬜ Add a server-owned coupon/promotion model only if business approves it.
@@ -153,8 +153,14 @@ For every sub-phase: **implement only that sub-phase → add/run its tests → f
 - ✅ **2.1 Authorization and account policy:** Centralized role/action policy, active-only public catalog, protected admin catalog APIs, IDOR-aware order access, category-in-use protection, and user-order retention safeguards.
 - ✅ **2.2 Reviews and ratings correctness:** Durable review model with one-review-per-user/product enforcement, delivered-order ownership checks, and aggregate rating recalculation.
 - ✅ **2.3 API and query contracts:** Bounded pagination/search, allowlisted catalog sorting, normalized documented contracts, and validated role updates.
-- ✅ **2.4 Media/upload architecture:** One S3 presigned-upload path, mounted API route, admin-only authorization, allowlisted image types, 5 MB size cap, and generated object keys.
+- ✅ **2.4 Media/upload architecture:** Cloudinary unsigned upload from client (product/category/avatar presets with per-use-case compression); server endpoint rewritten to Cloudinary signed-upload params; AWS SDK removed; API secret server-only.
 - ✅ Verification: server `npm run build`; targeted tests 5/5; targeted admin lint 0 errors; client `npm run build`.
+
+## Phase 3 delivery
+
+- 🟡 **3.1 Quality baseline is active.** Full client lint baseline was 89 errors and 52 warnings after Phase 2.
+- 🟡 Cart, featured-products, hero, navbar, and dashboard-sidebar priority components have been corrected and each is lint-clean when checked directly.
+- 🟡 Admin dashboard/order and profile components remain in the active cleanup batch. Phase 3 is not complete and has not been committed.
 
 ## Historical current status (before Phase 2 delivery)
 

@@ -5,13 +5,14 @@ import { User, Camera, Loader2, Check, ImageIcon, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import Image from "next/image";
-import { uploadToImgBB } from "@/helpers/imgbb.uploads";
+import { uploadToCloudinary } from "@/helpers/cloudinary.uploads";
 import { useUpdateProfileMutation } from "@/redux/api/userApi";
+import type { TUser } from "@/types/common";
 
 interface ProfileUpdateModalProps {
     isOpen: boolean;
     onClose: () => void;
-    profile: any;
+    profile: Partial<TUser> | null;
 }
 
 export function ProfileUpdateModal({ isOpen, onClose, profile }: ProfileUpdateModalProps) {
@@ -21,7 +22,6 @@ export function ProfileUpdateModal({ isOpen, onClose, profile }: ProfileUpdateMo
     const [contactNumber, setContactNumber] = useState("");
     const [profilePicture, setProfilePicture] = useState("");
     const [uploading, setUploading] = useState(false);
-    const [dragOver, setDragOver] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -36,10 +36,10 @@ export function ProfileUpdateModal({ isOpen, onClose, profile }: ProfileUpdateMo
         if (!file.type.startsWith("image/")) return;
         try {
             setUploading(true);
-            const url = await uploadToImgBB(file);
+            const url = await uploadToCloudinary(file, 'avatar');
             setProfilePicture(url);
-        } catch (err: any) {
-            toast.error(err.message || "Upload failed");
+        } catch (error: unknown) {
+            toast.error(error instanceof Error ? error.message : "Upload failed");
         } finally {
             setUploading(false);
         }
@@ -59,8 +59,11 @@ export function ProfileUpdateModal({ isOpen, onClose, profile }: ProfileUpdateMo
             await updateProfile(payload).unwrap();
             toast.success("Profile updated successfully!");
             onClose();
-        } catch (err: any) {
-            toast.error(err?.data?.message || "Failed to update profile.");
+        } catch (error: unknown) {
+            const message = typeof error === "object" && error !== null && "data" in error
+                ? (error as { data?: { message?: string } }).data?.message
+                : undefined;
+            toast.error(message || "Failed to update profile.");
         }
     };
 

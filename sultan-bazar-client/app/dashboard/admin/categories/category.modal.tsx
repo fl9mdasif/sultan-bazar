@@ -5,7 +5,7 @@ import { X, Loader2, AlertTriangle, Upload, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import type { TCategory } from "@/types/common";
-import { uploadToImgBB } from "@/helpers/imgbb.uploads";
+import { uploadToCloudinary } from "@/helpers/cloudinary.uploads";
 
 const emptyForm = () => ({
     name: "",
@@ -70,10 +70,11 @@ export function CategoryModal({
         if (!file.type.startsWith("image/")) return;
         try {
             setUploading(true);
-            const url = await uploadToImgBB(file);
+            const url = await uploadToCloudinary(file, 'category');
             setField("thumbnail", url);
-        } catch (err: any) {
-            alert(err.message || "Upload failed. Please try again.");
+        } catch (error: unknown) {
+            const message = error instanceof Error ? error.message : "Upload failed. Please try again.";
+            alert(message);
         } finally {
             setUploading(false);
         }

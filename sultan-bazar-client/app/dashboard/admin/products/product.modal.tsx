@@ -5,7 +5,7 @@ import type { TVariant, TProduct, TCategory } from "@/types/common";
 import { X, Loader2, Plus, AlertTriangle, Upload, ImageIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { uploadToImgBB } from "@/helpers/imgbb.uploads";
+import { uploadToCloudinary } from "@/helpers/cloudinary.uploads";
 
 const emptyVariant = (): TVariant => ({ name: "", sku: "", price: 0, stock: 0, isAvailable: true });
 
@@ -102,10 +102,10 @@ export function ProductModal({
         if (!file.type.startsWith("image/")) return;
         try {
             setUploading(true);
-            const url = await uploadToImgBB(file);
+            const url = await uploadToCloudinary(file, 'product');
             setField("thumbnail", url);
-        } catch (err: any) {
-            alert(err.message || "Upload failed. Please try again.");
+        } catch (error: unknown) {
+            alert(error instanceof Error ? error.message : "Upload failed. Please try again.");
         } finally {
             setUploading(false);
         }
