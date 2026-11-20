@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, Suspense } from "react";
+import { useState, useMemo, Suspense, type Dispatch, type SetStateAction } from "react";
 import { Search, SlidersHorizontal, X, ChevronDown, ChevronUp, ShoppingCart, Heart, Star, Filter, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -59,8 +59,6 @@ function ProductCard({ p }: { p: TProduct }) {
 
     const inStock = (variant.isAvailable ?? true) && variant.stock > 0;
 
-    const router = useRouter();
-
     const handleAddToCart = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -81,8 +79,11 @@ function ProductCard({ p }: { p: TProduct }) {
                 quantity: 1
             }).unwrap();
             toast.success(`${p.name} added to cart!`);
-        } catch (err: any) {
-            toast.error(err?.data?.message || "Failed to add to cart");
+        } catch (error: unknown) {
+            const message = typeof error === "object" && error !== null && "data" in error
+                ? (error as { data?: { message?: string } }).data?.message
+                : undefined;
+            toast.error(message || "Failed to add to cart");
         }
     };
 
@@ -186,7 +187,7 @@ function FilterPanel({
     const clearAll = () => {
         setSearch("");
         setSelectedCategory("All");
-        setPriceRange([0, 1000]);
+        setPriceRange([0, 10000]);
         setInStockOnly(false);
     };
 
@@ -277,14 +278,14 @@ function FilterPanel({
                 {priceOpen && (
                     <div>
                         <Slider
-                            min={0} max={1000} step={10}
+                            min={0} max={10000} step={100}
                             value={priceRange}
                             onValueChange={setPriceRange}
                             className="mb-3"
                         />
                         <div className="flex items-center justify-between text-sm font-semibold" style={{ color: "#B5451B" }}>
                             <span>৳{priceRange[0]}</span>
-                            <span>৳{priceRange[1]}</span>
+                            <span>{priceRange[1] >= 10000 ? "৳10000+" : `৳${priceRange[1]}`}</span>
                         </div>
                     </div>
                 )}
@@ -309,39 +310,33 @@ function FilterPanel({
 
 // ── Content Component ──────────────────────────────────────────────────────────
 function ProductsPageContent() {
+    const router = useRouter();
     const [search, setSearch] = useState("");
     const [selectedCategory, setSelectedCategory] = useState("All");
-    const [priceRange, setPriceRange] = useState([0, 1000]);
+    const [priceRange, setPriceRange] = useState([0, 10000]);
     const [inStockOnly, setInStockOnly] = useState(false);
     const [sort, setSort] = useState("-createdAt");
     const [page, setPage] = useState(1);
 
     // Fetch Categories
     const { data: categoryData } = useGetAllCategoriesQuery({});
-    const categories: TCategory[] = categoryData || [];
+    const categories = useMemo<TCategory[]>(() => categoryData || [], [categoryData]);
 
     const searchParams = useSearchParams();
     const urlCategory = searchParams.get("category");
 
-    // Sync URL category parameter with state
-    useEffect(() => {
-        if (urlCategory && categories.length > 0) {
-            const matchedCat = categories.find(
-                (c) => c.name.toLowerCase() === urlCategory.toLowerCase()
-            );
-            if (matchedCat) {
-                setSelectedCategory(matchedCat._id);
-                setPage(1);
-            }
-        }
-    }, [urlCategory, categories]);
+    const urlSelectedCategory = useMemo(() => {
+        if (!urlCategory) return undefined;
+        return categories.find((category) => category.name.toLowerCase() === urlCategory.toLowerCase())?._id;
+    }, [categories, urlCategory]);
+    const activeSelectedCategory = urlSelectedCategory ?? selectedCategory;
 
     // Fetch Products with real filters
     const { data: productsData, isLoading, isError } = useGetAllProductsQuery({
         search: search || undefined,
-        category: selectedCategory !== "All" ? selectedCategory : undefined,
-        minPrice: priceRange[0],
-        maxPrice: priceRange[1],
+        category: activeSelectedCategory !== "All" ? activeSelectedCategory : undefined,
+        minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+        maxPrice: priceRange[1] < 10000 ? priceRange[1] : undefined,
         sort,
         page,
         limit: ITEMS_PER_PAGE,
@@ -356,15 +351,16 @@ function ProductsPageContent() {
     // console.log("product", products)
 
     // Reset page if filters change
-    const handleFilterChange = (setter: any) => (v: any) => {
-        setter(v);
+    const handleFilterChange = <T,>(setter: Dispatch<SetStateAction<T>>) => (value: T) => {
+        if (urlCategory) router.replace("/products", { scroll: false });
+        setter(value);
         setPage(1);
     };
 
     const activeFilterCount = [
         search.trim() !== "",
-        selectedCategory !== "All",
-        priceRange[0] > 0 || priceRange[1] < 1000,
+        activeSelectedCategory !== "All",
+        priceRange[0] > 0 || priceRange[1] < 10000,
         inStockOnly,
     ].filter(Boolean).length;
 
@@ -404,7 +400,7 @@ function ProductsPageContent() {
                         <div className="sticky top-20 bg-white rounded-2xl p-5 border shadow-sm" style={{ border: "1.5px solid #F0E6D3" }}>
                             <FilterPanel
                                 search={search} setSearch={handleFilterChange(setSearch)}
-                                selectedCategory={selectedCategory} setSelectedCategory={handleFilterChange(setSelectedCategory)}
+                                selectedCategory={activeSelectedCategory} setSelectedCategory={handleFilterChange(setSelectedCategory)}
                                 priceRange={priceRange} setPriceRange={handleFilterChange(setPriceRange)}
                                 inStockOnly={inStockOnly} setInStockOnly={handleFilterChange(setInStockOnly)}
                                 categories={categories}
@@ -440,7 +436,7 @@ function ProductsPageContent() {
                                     </div>
                                     <FilterPanel
                                         search={search} setSearch={handleFilterChange(setSearch)}
-                                        selectedCategory={selectedCategory} setSelectedCategory={handleFilterChange(setSelectedCategory)}
+                                        selectedCategory={activeSelectedCategory} setSelectedCategory={handleFilterChange(setSelectedCategory)}
                                         priceRange={priceRange} setPriceRange={handleFilterChange(setPriceRange)}
                                         inStockOnly={inStockOnly} setInStockOnly={handleFilterChange(setInStockOnly)}
                                         categories={categories}
